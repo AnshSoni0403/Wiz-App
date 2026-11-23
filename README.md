@@ -12,7 +12,7 @@ intake, draft chat, licence pricing, and Google Docs export.
 
 ```bash
 npm install
-npm run dev       # http://localhost:7003/wizz-app/  (proxies /api -> http://localhost:7002)
+npm run dev       # http://localhost:7003/wizz-app/ (proxies /api to WIZZ_BACKEND_ORIGIN)
 npm run build     # production build into dist/
 npm run build:vercel # production build into dist-vercel/wizz-app/
 npm run preview   # serve dist/ at http://localhost:7003/wizz-app/ (no API proxy)
@@ -31,9 +31,8 @@ existing cookie session (the same login as the Admin) works without CORS:
 - It is deliberately **not** `/wizz/`: the Admin panel has its own pages at `/wizz/knowledge`,
   `/wizz/members` and `/wizz/settings`, and a service worker scoped to `/wizz/` would capture them.
 - All API calls are same-origin: `/api/v1/...`.
-- In development, Vite proxies `/api` to the Admin's dev API (`http://localhost:7002`, from
-  `marwizvision-v2-admin/src/config.jsx`). The proxy rewrites the `Origin` header to the API's own
-  origin because the API's CORS allow-list does not include port 7003.
+- For local frontend development, set `WIZZ_BACKEND_ORIGIN` in the ignored `.env` to the deployed
+  Marwiz API's HTTPS origin. Vite forwards same-origin `/api` requests to that API.
 
 **Deployment:** the build output `dist/` is copied to the server's `out/wizz-app/` folder at
 deploy time (not done by this task). The server registers `express.static(out/wizz-app)` at

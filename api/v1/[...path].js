@@ -1,3 +1,9 @@
+import { readFileSync } from "node:fs";
+import { parseEnv } from "node:util";
+
+const backendOrigin = () => process.env.WIZZ_BACKEND_ORIGIN
+    || parseEnv(readFileSync(new URL("../../.env", import.meta.url), "utf8")).WIZZ_BACKEND_ORIGIN;
+
 const readRoutes = new Set(["/api/v1/auth/me", "/api/v1/wizz/me", "/api/v1/wizz/conversations"]);
 const authWrites = new Set(["/api/v1/auth/company/login", "/api/v1/auth/logout"]);
 const proposalPath = /^\/api\/v1\/wizz\/proposals\/([a-f\d]{24})\/(answer|chat|pricing|write|google-doc)$/;
@@ -19,7 +25,7 @@ export default async function handler(request) {
 
     let origin;
     try {
-        origin = new URL(process.env.WIZZ_BACKEND_ORIGIN);
+        origin = new URL(backendOrigin());
         if (origin.protocol !== "https:" || origin.username || origin.password
             || origin.pathname !== "/" || origin.search || origin.hash
             || origin.origin === new URL(request.url).origin) throw new Error();

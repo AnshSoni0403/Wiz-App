@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
@@ -8,9 +8,6 @@ const pkg = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), 
 // Brand values come from the Admin's theme (marwizvision-v2-admin/src/constants/roleTheme.js, GOLD_THEME).
 const BRAND_PRIMARY = "#8F6B2F";
 const BRAND_CANVAS = "#F6F3ED";
-
-// The Admin's development API (marwizvision-v2-admin/src/config.jsx).
-const DEV_API_TARGET = "http://localhost:7002";
 
 const appConfig = {
     // The server serves the built app at /wizz-app/ on the same origin as the API.
@@ -64,18 +61,6 @@ const appConfig = {
     server: {
         port: 7003,
         strictPort: true,
-        proxy: {
-            "/api": {
-                target: DEV_API_TARGET,
-                changeOrigin: true,
-                // The API's CORS allow-list does not include :7003, so present the request as same-origin.
-                configure: (proxy) => {
-                    proxy.on("proxyReq", (proxyReq) => {
-                        if (proxyReq.getHeader("origin")) proxyReq.setHeader("origin", DEV_API_TARGET);
-                    });
-                },
-            },
-        },
     },
     preview: {
         port: 7003,
@@ -90,5 +75,31 @@ export default defineConfig(({ command, mode }) => {
     // A machine-wide NODE_ENV=development would otherwise make `vite build` bundle React's
     // development build. Production builds always use production React.
     if (command === "build" && mode === "production") process.env.NODE_ENV = "production";
-    return appConfig;
+    if (command !== "serve") return appConfig;
+    const upstream = loadEnv(mode, process.cwd(), "WIZZ_").WIZZ_BACKEND_ORIGIN;
+    if (!upstream) return appConfig;
+    const url = new URL(upstream);
+    if (url.protocol !== "https:" || url.username || url.password || url.pathname !== "/" || url.search || url.hash) {
+        throw new Error("WIZZ_BACKEND_ORIGIN must be a deployed HTTPS origin.");
+    }
+    return {
+        ...appConfig,
+        server: {
+            ...appConfig.server,
+            proxy: {
+                "/api": {
+                    target: url.origin,
+                    changeOrigin: true,
+                    configure: (proxy) => {
+                        proxy.on("proxyReq", (proxyReq, req) => {
+                            const origin = req.headers.origin;
+                            if (origin === `http://${req.headers.host}` || origin === `https://${req.headers.host}`) {
+                                proxyReq.setHeader("origin", url.origin);
+                            }
+                        });
+                    },
+                },
+            },
+        },
+    };
 });
