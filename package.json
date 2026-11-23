@@ -1,0 +1,28 @@
+{
+    "name": "marwiz-wizz",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "description": "Wizz - Marwiz Vision's AI assistant app for staff (PWA, served at /wizz-app/)",
+    "engines": {
+        "node": ">=22.0.0"
+    },
+    "scripts": {
+        "dev": "vite",
+        "start": "vite",
+        "build": "vite build",
+        "build:vercel": "vite build --outDir dist-vercel/wizz-app",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "axios": "^1.12.2",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "react-router-dom": "^6.30.2"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-react": "^5.1.2",
+        "vite": "^7.3.1",
+        "vite-plugin-pwa": "^1.2.0"
+    }
+}
