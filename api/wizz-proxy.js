@@ -9,7 +9,7 @@ const authWrites = new Set(["/api/v1/auth/company/login", "/api/v1/auth/logout"]
 const proposalPath = /^\/api\/v1\/wizz\/proposals\/([a-f\d]{24})\/(answer|chat|pricing|write|google-doc)$/;
 const proposalMethods = { answer: "PATCH", chat: "POST", pricing: "GET", write: "POST", "google-doc": "POST" };
 
-export default async function handler(request) {
+async function handler(request) {
     const url = new URL(request.url);
     const routedPath = url.searchParams.getAll("__wizz_path");
     const pathname = url.pathname === "/api/wizz-proxy"
@@ -85,3 +85,5 @@ export default async function handler(request) {
         return Response.json({ message: "Wizz backend is temporarily unavailable." }, { status: 502 });
     }
 }
+
+export default { fetch: handler };
