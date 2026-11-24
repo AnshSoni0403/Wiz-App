@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { parseEnv } from "node:util";
 
 const backendOrigin = () => process.env.WIZZ_BACKEND_ORIGIN
-    || parseEnv(readFileSync(new URL("../../.env", import.meta.url), "utf8")).WIZZ_BACKEND_ORIGIN;
+    || parseEnv(readFileSync(new URL("../.env", import.meta.url), "utf8")).WIZZ_BACKEND_ORIGIN;
 
 const readRoutes = new Set(["/api/v1/auth/me", "/api/v1/wizz/me", "/api/v1/wizz/conversations"]);
 const authWrites = new Set(["/api/v1/auth/company/login", "/api/v1/auth/logout"]);
@@ -10,7 +10,13 @@ const proposalPath = /^\/api\/v1\/wizz\/proposals\/([a-f\d]{24})\/(answer|chat|p
 const proposalMethods = { answer: "PATCH", chat: "POST", pricing: "GET", write: "POST", "google-doc": "POST" };
 
 export default async function handler(request) {
-    const { pathname, search } = new URL(request.url);
+    const url = new URL(request.url);
+    const routedPath = url.searchParams.getAll("__wizz_path");
+    const pathname = url.pathname === "/api/wizz-proxy"
+        ? (routedPath.length === 1 ? `/api/v1/${routedPath[0]}` : "")
+        : url.pathname;
+    url.searchParams.delete("__wizz_path");
+    const search = url.search;
     const method = request.method;
     const isFile = /^\/api\/v1\/wizz\/public\/file\/[\w.-]+$/.test(pathname);
     const proposalAction = proposalPath.exec(pathname)?.[2];
