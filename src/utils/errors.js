@@ -9,13 +9,15 @@ export const NO_ACCESS_MESSAGE =
 export const AI_NOT_CONFIGURED_MESSAGE = "Wizz's AI isn't switched on yet. Please ask your admin to finish the setup.";
 
 export class ApiError extends Error {
-    constructor({ kind = "http", status = 0, code = "", message = "" } = {}) {
+    constructor({ kind = "http", status = 0, code = "", message = "", errors = null } = {}) {
         super(message || "Request failed");
         this.name = "ApiError";
         this.kind = kind; // "http" | "network" | "timeout" | "cancelled"
         this.status = status;
         this.code = code || "";
         this.serverMessage = message || "";
+        // 400 VALIDATION: { "field.path": "message" } from the server, when it sent one.
+        this.errors = errors && typeof errors === "object" && !Array.isArray(errors) ? errors : null;
     }
 }
 
@@ -31,6 +33,7 @@ export const toApiError = (error) => {
             status: error.response.status,
             code: body.code,
             message: body.message,
+            errors: body.errors,
         });
     }
     if (error?.code === "ECONNABORTED" || error?.code === "ETIMEDOUT") {
@@ -58,6 +61,8 @@ export const friendlyMessage = (error) => {
             return "You don't have access to that branch. Pick another branch and try again.";
         case "VALIDATION":
             return e.serverMessage || "Please check your message and try again.";
+        case "RESEARCH_FORBIDDEN":
+            return e.serverMessage || "You don't have access to this research or branch.";
         default:
             break;
     }
@@ -72,6 +77,15 @@ export const friendlyMessage = (error) => {
 export const isRetryable = (error) => {
     const e = toApiError(error);
     if (e.kind === "network" || e.kind === "timeout") return true;
-    if (e.code === "WIZZ_NO_ACCESS" || e.code === "VALIDATION" || e.code === "WIZZ_FORBIDDEN_BRANCH") return false;
+    if (["WIZZ_NO_ACCESS", "VALIDATION", "WIZZ_FORBIDDEN_BRANCH", "RESEARCH_FORBIDDEN"].includes(e.code)) return false;
     return e.status === 429 || e.status >= 500;
+};
+
+/** Readable lines ("analysis fps must be a number from 0.1 to 120") from a 400 VALIDATION `errors` map; [] when none. */
+export const fieldErrorLines = (error) => {
+    const errors = toApiError(error).errors;
+    if (!errors) return [];
+    return Object.entries(errors)
+        .filter(([, message]) => typeof message === "string" && message)
+        .map(([field, message]) => `${field.split(".").pop().replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase()} ${message}`);
 };

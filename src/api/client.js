@@ -37,6 +37,7 @@ export const unwrap = (response) => {
             status: body.status || response.status,
             code: body.code,
             message: body.message,
+            errors: body.errors,
         });
     }
     return body?.data;

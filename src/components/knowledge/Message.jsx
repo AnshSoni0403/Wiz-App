@@ -1,5 +1,6 @@
 import Icon from "../Icon";
 import Markdown from "../Markdown";
+import ResearchJobCard from "../research/ResearchJobCard";
 import { branchName } from "../../utils/format";
 import { safeHref } from "../../utils/markdown";
 import { friendlyMessage, isRetryable } from "../../utils/errors";
@@ -96,6 +97,7 @@ export const AssistantMessage = ({ message, branches }) => (
     <div className="msg msg--assistant">
         <div className="bubble bubble--assistant">
             <Markdown text={message.text || ""} />
+            {message.research ? <ResearchJobCard research={message.research} /> : null}
             <MediaCards media={message.media} />
             <Citations citations={message.citations} branches={branches} />
             {message.gapLogged ? (

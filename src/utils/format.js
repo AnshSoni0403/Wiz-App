@@ -45,6 +45,13 @@ export const relativeTime = (value) => {
     return date.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 };
 
+/** "12 Nov 2026", or "" for a missing / invalid date. */
+export const formatDate = (value) => {
+    const date = value ? new Date(value) : null;
+    if (!date || Number.isNaN(date.getTime())) return "";
+    return date.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+};
+
 export const countdown = (msLeft) => {
     const total = Math.max(0, Math.ceil(msLeft / 1000));
     const m = Math.floor(total / 60);

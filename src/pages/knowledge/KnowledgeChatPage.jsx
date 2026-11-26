@@ -12,6 +12,8 @@ import useBranchPreference from "../../hooks/useBranchPreference";
 import { getConversation, sendChat } from "../../api/wizz.api";
 import { AI_NOT_CONFIGURED_MESSAGE, friendlyMessage, isRetryable, toApiError } from "../../utils/errors";
 import { firstName, localId } from "../../utils/format";
+import { normaliseChatResearch } from "../../utils/research";
+import { canUseResearch } from "../../agents/access";
 
 const BASE_PATH = "/knowledge";
 
@@ -23,6 +25,8 @@ const fromServerMessage = (m) => ({
     media: m.media || [],
     at: m.at,
     gapLogged: Boolean(m.gapLogged),
+    // Research Agent job started from this message: { jobId, runId, reportId, status, title, mode }.
+    research: normaliseChatResearch(m.research),
     status: "sent",
 });
 
@@ -249,7 +253,7 @@ const KnowledgeChatPage = () => {
                         </div>
                     ) : null}
 
-                    {empty ? <StarterQuestions name={name} onPick={send} disabled={sending} /> : null}
+                    {empty ? <StarterQuestions name={name} onPick={send} disabled={sending} research={canUseResearch(wizz)} /> : null}
 
                     {messages.map((m) =>
                         m.role === "user" ? (

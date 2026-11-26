@@ -4,10 +4,17 @@ import { parseEnv } from "node:util";
 const backendOrigin = () => process.env.WIZZ_BACKEND_ORIGIN
     || parseEnv(readFileSync(new URL("../.env", import.meta.url), "utf8")).WIZZ_BACKEND_ORIGIN;
 
-const readRoutes = new Set(["/api/v1/auth/me", "/api/v1/wizz/me", "/api/v1/wizz/conversations"]);
+const readRoutes = new Set([
+    "/api/v1/auth/me", "/api/v1/wizz/me", "/api/v1/wizz/conversations",
+    "/api/v1/wizz/research/overview", "/api/v1/wizz/research/reports",
+]);
 const authWrites = new Set(["/api/v1/auth/company/login", "/api/v1/auth/logout"]);
 const proposalPath = /^\/api\/v1\/wizz\/proposals\/([a-f\d]{24})\/(answer|chat|pricing|write|google-doc)$/;
 const proposalMethods = { answer: "PATCH", chat: "POST", pricing: "GET", write: "POST", "google-doc": "POST" };
+// The PWA only reads reports, follows runs, starts one-off research and refreshes a report;
+// editing, approval, schedules and watchlists stay in the Admin.
+const researchReadPath = /^\/api\/v1\/wizz\/research\/(reports|runs)\/[a-f\d]{24}$/;
+const researchRefreshPath = /^\/api\/v1\/wizz\/research\/reports\/[a-f\d]{24}\/refresh$/;
 
 async function handler(request) {
     const url = new URL(request.url);
@@ -26,7 +33,9 @@ async function handler(request) {
         || (["GET", "DELETE"].includes(method) && /^\/api\/v1\/wizz\/conversations\/[a-f\d]{24}$/.test(pathname))
         || (["GET", "HEAD"].includes(method) && isFile)
         || (["GET", "POST"].includes(method) && pathname === "/api/v1/wizz/proposals")
-        || (proposalAction && proposalMethods[proposalAction] === method);
+        || (proposalAction && proposalMethods[proposalAction] === method)
+        || (method === "GET" && researchReadPath.test(pathname))
+        || (method === "POST" && (pathname === "/api/v1/wizz/research/jobs" || researchRefreshPath.test(pathname)));
     if (!allowed) return new Response(null, { status: 404 });
 
     let origin;

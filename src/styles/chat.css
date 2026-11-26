@@ -325,6 +325,20 @@ a.media-card:hover {
     border-color: var(--brand);
 }
 
+.starters--research {
+    margin-top: 16px;
+}
+
+.starters__title {
+    margin: 0 0 2px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-align: left;
+}
+
 /* Composer */
 .composer {
     display: flex;
