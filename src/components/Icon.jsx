@@ -3,15 +3,6 @@
  */
 const PATHS = {
     proposal: <path d="M6 3h8l4 4v14H6zM14 3v5h4M9 12h6M9 16h6" />,
-    // A report page with a magnifier over its corner: "look into this and write it up".
-    research: (
-        <>
-            <path d="M10.5 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8l4 4v3.5" />
-            <path d="M14 3v4h4M8 8h3M8 12h3.5M8 16h1.5" />
-            <circle cx="16" cy="16" r="3.5" />
-            <path d="m18.6 18.6 2.4 2.4" />
-        </>
-    ),
     history: (
         <>
             <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />

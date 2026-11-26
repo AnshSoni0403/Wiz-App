@@ -10,5 +10,9 @@ const isStaff = (wizz) => Boolean(wizz && (wizz.isOwner || STAFF_ROLES.includes(
 /** Proposals: staff roles, not partners. */
 export const canUseProposals = isStaff;
 
-/** Research Agent: guarded by requireWizzRole("owner","branch_head","editor","staff") on the server. */
+/**
+ * Web research from chat (the server decides when a question needs it): guarded by
+ * requireWizzRole("owner","branch_head","editor","staff") on the server. Only decides which
+ * example questions the chat offers.
+ */
 export const canUseResearch = isStaff;

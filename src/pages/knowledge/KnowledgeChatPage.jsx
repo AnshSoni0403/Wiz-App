@@ -7,15 +7,19 @@ import Composer from "../../components/knowledge/Composer";
 import HistoryDrawer from "../../components/knowledge/HistoryDrawer";
 import StarterQuestions from "../../components/knowledge/StarterQuestions";
 import { AssistantMessage, TypingIndicator, UserMessage } from "../../components/knowledge/Message";
+import ResearchStatus from "../../components/knowledge/ResearchStatus";
 import { useAuth } from "../../context/AuthContext";
 import useBranchPreference from "../../hooks/useBranchPreference";
 import { getConversation, sendChat } from "../../api/wizz.api";
 import { AI_NOT_CONFIGURED_MESSAGE, friendlyMessage, isRetryable, toApiError } from "../../utils/errors";
 import { firstName, localId } from "../../utils/format";
-import { normaliseChatResearch } from "../../utils/research";
+import { answeredResearch, isActiveRun, isAnswered, normaliseChatResearch } from "../../utils/research";
 import { canUseResearch } from "../../agents/access";
 
 const BASE_PATH = "/knowledge";
+// After a research run finishes, the server posts the answer into the conversation. If it isn't
+// there yet when we look, look again after these delays before giving up.
+const ANSWER_RETRY_MS = [3000, 6000, 10000];
 
 const fromServerMessage = (m) => ({
     id: localId(),
@@ -25,7 +29,7 @@ const fromServerMessage = (m) => ({
     media: m.media || [],
     at: m.at,
     gapLogged: Boolean(m.gapLogged),
-    // Research Agent job started from this message: { jobId, runId, reportId, status, title, mode }.
+    // Web research behind this reply: { jobId, runId, reportId, status, title }, or null.
     research: normaliseChatResearch(m.research),
     status: "sent",
 });
@@ -48,10 +52,15 @@ const KnowledgeChatPage = () => {
     const [aiOff, setAiOff] = useState(wizz?.aiConfigured === false);
     const [historyOpen, setHistoryOpen] = useState(false);
     const [historyKey, setHistoryKey] = useState(0);
+    // Research runs seen to finish here: runId -> { status, phase: "loading" | "missing" }.
+    const [settledRuns, setSettledRuns] = useState(() => new Map());
 
     const loadedIdRef = useRef(null); // conversation whose messages are in state
     const chatSeqRef = useRef(0);
     const chatAbortRef = useRef(null);
+    const settledRef = useRef(new Map());
+    const answerTimerRef = useRef(null);
+    const answerAbortRef = useRef(null);
     const scrollRef = useRef(null);
     const composerRef = useRef(null);
 
@@ -59,11 +68,26 @@ const KnowledgeChatPage = () => {
         setAiOff(wizz?.aiConfigured === false);
     }, [wizz?.aiConfigured]);
 
+    const setSettled = (runId, value) => {
+        if (value) settledRef.current.set(runId, value);
+        else settledRef.current.delete(runId);
+        setSettledRuns(new Map(settledRef.current));
+    };
+
     const cancelInFlight = () => {
         chatSeqRef.current += 1;
         chatAbortRef.current?.abort();
         chatAbortRef.current = null;
         setSending(false);
+        // Stop waiting for research answers of the conversation we are leaving; if it is opened
+        // again, its still-running research is followed afresh.
+        window.clearTimeout(answerTimerRef.current);
+        answerAbortRef.current?.abort();
+        answerAbortRef.current = null;
+        for (const [runId, value] of settledRef.current) {
+            if (value.phase === "loading") settledRef.current.delete(runId);
+        }
+        setSettledRuns(new Map(settledRef.current));
     };
 
     // Load (or reset) the conversation when the route changes.
@@ -98,7 +122,83 @@ const KnowledgeChatPage = () => {
         return () => controller.abort();
     }, [routeId, loadConversation]);
 
-    useEffect(() => () => chatAbortRef.current?.abort(), []);
+    useEffect(
+        () => () => {
+            chatAbortRef.current?.abort();
+            answerAbortRef.current?.abort();
+            window.clearTimeout(answerTimerRef.current);
+        },
+        []
+    );
+
+    /**
+     * Re-reads the open conversation to pick up research answers the server has posted, keeping
+     * any message the user couldn't send. Waits while a chat request is in flight so the two
+     * don't overwrite each other, and retries a few times when an answer isn't there yet.
+     */
+    const fetchResearchAnswers = useCallback(async function fetchAnswers(attempt = 0) {
+        window.clearTimeout(answerTimerRef.current);
+        answerAbortRef.current?.abort();
+        const id = loadedIdRef.current;
+        if (!id) return;
+        const later = (delay, nextAttempt) => {
+            answerTimerRef.current = window.setTimeout(() => fetchAnswers(nextAttempt), delay);
+        };
+        if (chatAbortRef.current) {
+            later(2000, attempt);
+            return;
+        }
+
+        const controller = new AbortController();
+        answerAbortRef.current = controller;
+        let next = null;
+        try {
+            const conv = await getConversation(id, { signal: controller.signal });
+            next = (conv?.messages || []).map(fromServerMessage);
+        } catch (err) {
+            if (toApiError(err).kind === "cancelled") return;
+        }
+        if (controller.signal.aborted || id !== loadedIdRef.current) return;
+        answerAbortRef.current = null;
+        if (chatAbortRef.current) {
+            later(2000, attempt); // a message went out meanwhile; its reply isn't in `next`
+            return;
+        }
+
+        if (next) {
+            setMessages((list) => [...next, ...list.filter((m) => m.role === "user" && m.status === "failed")]);
+        }
+        const answered = next ? answeredResearch(next) : new Set();
+        const waiting = [...settledRef.current].filter(
+            ([runId, value]) => value.phase === "loading" && !isAnswered({ runId, jobId: value.jobId }, answered)
+        );
+        if (!waiting.length) return;
+        if (attempt < ANSWER_RETRY_MS.length) {
+            later(ANSWER_RETRY_MS[attempt], attempt + 1);
+            return;
+        }
+        for (const [runId, value] of waiting) settledRef.current.set(runId, { ...value, phase: "missing" });
+        setSettledRuns(new Map(settledRef.current));
+    }, []);
+
+    const onResearchFinished = useCallback(
+        (research, status) => {
+            if (!research.runId || settledRef.current.has(research.runId)) return;
+            setSettled(research.runId, { status, jobId: research.jobId, phase: "loading" });
+            fetchResearchAnswers(0);
+        },
+        [fetchResearchAnswers]
+    );
+
+    const showResearchAnswer = useCallback(
+        (research) => {
+            const value = settledRef.current.get(research.runId);
+            if (!value) return;
+            setSettled(research.runId, { ...value, phase: "loading" });
+            fetchResearchAnswers(0);
+        },
+        [fetchResearchAnswers]
+    );
 
     // Keep the newest message in view.
     useLayoutEffect(() => {
@@ -203,6 +303,20 @@ const KnowledgeChatPage = () => {
 
     const name = firstName(wizz?.member?.name || user?.employeeName || "");
     const empty = !messages.length && !loadingConversation && !loadError;
+    // Research whose answer is already in the thread shows nothing extra.
+    const answered = answeredResearch(messages);
+    const researchStatusFor = (m) => {
+        const r = m.research;
+        if (!r?.runId || !isActiveRun(r.status) || isAnswered(r, answered)) return null;
+        return (
+            <ResearchStatus
+                research={r}
+                settled={settledRuns.get(r.runId) || null}
+                onFinished={onResearchFinished}
+                onShowAnswer={() => showResearchAnswer(r)}
+            />
+        );
+    };
 
     return (
         <div className="page page--chat">
@@ -259,7 +373,9 @@ const KnowledgeChatPage = () => {
                         m.role === "user" ? (
                             <UserMessage key={m.id} message={m} onRetry={retry} retryDisabled={sending} />
                         ) : (
-                            <AssistantMessage key={m.id} message={m} branches={branches} />
+                            <AssistantMessage key={m.id} message={m} branches={branches}>
+                                {researchStatusFor(m)}
+                            </AssistantMessage>
                         )
                     )}
 

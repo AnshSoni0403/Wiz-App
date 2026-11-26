@@ -10,8 +10,7 @@
  */
 import KnowledgeChatPage from "../pages/knowledge/KnowledgeChatPage";
 import ProposalsPage from "../pages/proposals/ProposalsPage";
-import ResearchPage from "../pages/research/ResearchPage";
-import { canUseProposals, canUseResearch } from "./access";
+import { canUseProposals } from "./access";
 
 export const AGENTS = [
     {
@@ -32,16 +31,6 @@ export const AGENTS = [
         enabled: true,
         isAvailable: canUseProposals,
         Component: ProposalsPage,
-    },
-    {
-        key: "research",
-        label: "Research",
-        icon: "research",
-        path: "/research",
-        routePath: "research/:reportId?",
-        enabled: true,
-        isAvailable: canUseResearch,
-        Component: ResearchPage,
     },
     {
         key: "tasks",

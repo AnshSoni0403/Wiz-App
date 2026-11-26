@@ -1,6 +1,5 @@
 import Icon from "../Icon";
 import Markdown from "../Markdown";
-import ResearchJobCard from "../research/ResearchJobCard";
 import { branchName } from "../../utils/format";
 import { safeHref } from "../../utils/markdown";
 import { friendlyMessage, isRetryable } from "../../utils/errors";
@@ -93,11 +92,12 @@ export const UserMessage = ({ message, onRetry, retryDisabled }) => (
     </div>
 );
 
-export const AssistantMessage = ({ message, branches }) => (
+/** `children` render under the reply text (e.g. the research progress line). */
+export const AssistantMessage = ({ message, branches, children = null }) => (
     <div className="msg msg--assistant">
         <div className="bubble bubble--assistant">
             <Markdown text={message.text || ""} />
-            {message.research ? <ResearchJobCard research={message.research} /> : null}
+            {children}
             <MediaCards media={message.media} />
             <Citations citations={message.citations} branches={branches} />
             {message.gapLogged ? (

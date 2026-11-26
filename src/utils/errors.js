@@ -80,12 +80,3 @@ export const isRetryable = (error) => {
     if (["WIZZ_NO_ACCESS", "VALIDATION", "WIZZ_FORBIDDEN_BRANCH", "RESEARCH_FORBIDDEN"].includes(e.code)) return false;
     return e.status === 429 || e.status >= 500;
 };
-
-/** Readable lines ("analysis fps must be a number from 0.1 to 120") from a 400 VALIDATION `errors` map; [] when none. */
-export const fieldErrorLines = (error) => {
-    const errors = toApiError(error).errors;
-    if (!errors) return [];
-    return Object.entries(errors)
-        .filter(([, message]) => typeof message === "string" && message)
-        .map(([field, message]) => `${field.split(".").pop().replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase()} ${message}`);
-};
