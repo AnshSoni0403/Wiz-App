@@ -10,7 +10,8 @@
  */
 import KnowledgeChatPage from "../pages/knowledge/KnowledgeChatPage";
 import ProposalsPage from "../pages/proposals/ProposalsPage";
-import { canUseProposals } from "./access";
+import TasksPage from "../pages/tasks/TasksPage";
+import { canUseProposals, canUseTasks } from "./access";
 
 export const AGENTS = [
     {
@@ -38,8 +39,9 @@ export const AGENTS = [
         icon: "tasks",
         path: "/tasks",
         routePath: "tasks/*",
-        enabled: false,
-        Component: null,
+        enabled: true,
+        isAvailable: canUseTasks,
+        Component: TasksPage,
     },
     {
         key: "crm",

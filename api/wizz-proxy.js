@@ -11,6 +11,28 @@ const proposalMethods = { answer: "PATCH", chat: "POST", pricing: "GET", write: 
 // Research is started by the chat itself; the PWA only follows a run's progress.
 const researchRunPath = /^\/api\/v1\/wizz\/research\/runs\/[a-f\d]{24}$/;
 
+// Task Agent and notification inbox (marwizvision-v2-server/docs/task-agent-api.md): exactly the
+// routes the PWA calls, each with its methods. The backend checks who may see or change each task.
+const ID = "[a-f\\d]{24}";
+const route = (methods, pattern) => ({ methods, re: new RegExp(`^/api/v1/${pattern}$`) });
+const taskRoutes = [
+    route(["GET", "POST"], "tasks"),
+    route(["GET"], "tasks/(access|directory|summary|workload|teams)"),
+    route(["GET", "PUT"], `tasks/${ID}`),
+    route(["PUT"], `tasks/${ID}/(status|follow-up)`),
+    route(["POST"], `tasks/${ID}/(review|comments|checklist|attachments|watch)`),
+    route(["PATCH", "DELETE"], `tasks/${ID}/checklist/${ID}`),
+    route(["DELETE"], `tasks/${ID}/attachments/${ID}`),
+    route(["GET"], "notifications"),
+    route(["GET"], "notifications/(unread-count|push/config)"),
+    route(["POST"], "notifications/(read-all|push/subscribe|push/unsubscribe)"),
+    route(["POST"], `notifications/${ID}/read`),
+    route(["PATCH"], `wizz/tasks/actions/${ID}`),
+    route(["POST"], `wizz/tasks/actions/${ID}/(confirm|cancel)`),
+];
+// Evidence downloads are files (images, PDFs, ...), not JSON.
+const taskAttachmentPath = new RegExp(`^/api/v1/tasks/${ID}/attachments/${ID}$`);
+
 async function handler(request) {
     const url = new URL(request.url);
     const routedPath = url.searchParams.getAll("__wizz_path");
@@ -20,9 +42,12 @@ async function handler(request) {
     url.searchParams.delete("__wizz_path");
     const search = url.search;
     const method = request.method;
-    const isFile = /^\/api\/v1\/wizz\/public\/file\/[\w.-]+$/.test(pathname);
+    const isAttachment = ["GET", "HEAD"].includes(method) && taskAttachmentPath.test(pathname);
+    const isFile = /^\/api\/v1\/wizz\/public\/file\/[\w.-]+$/.test(pathname) || isAttachment;
     const proposalAction = proposalPath.exec(pathname)?.[2];
     const allowed = (method === "GET" && readRoutes.has(pathname))
+        || isAttachment
+        || taskRoutes.some((r) => r.methods.includes(method) && r.re.test(pathname))
         || (method === "POST" && authWrites.has(pathname))
         || (method === "POST" && pathname === "/api/v1/wizz/chat")
         || (["GET", "DELETE"].includes(method) && /^\/api\/v1\/wizz\/conversations\/[a-f\d]{24}$/.test(pathname))
@@ -57,7 +82,7 @@ async function handler(request) {
         const upstream = await fetch(new URL(pathname + search, origin), {
             method,
             headers,
-            body: ["POST", "PATCH"].includes(method) ? await request.arrayBuffer() : undefined,
+            body: ["POST", "PATCH", "PUT"].includes(method) ? await request.arrayBuffer() : undefined,
             redirect: "manual",
             signal: AbortSignal.timeout(110000),
         });

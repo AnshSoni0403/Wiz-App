@@ -3,6 +3,7 @@ import Markdown from "../Markdown";
 import { branchName } from "../../utils/format";
 import { safeHref } from "../../utils/markdown";
 import { friendlyMessage, isRetryable } from "../../utils/errors";
+import TaskActionCard, { TaskRefs } from "./TaskActionCard";
 
 const MEDIA_ICONS = { video: "video", image: "image", document: "document" };
 const KIND_LABELS = { drive: "Google Drive", file: "File", external: "Link" };
@@ -98,6 +99,8 @@ export const AssistantMessage = ({ message, branches, children = null }) => (
         <div className="bubble bubble--assistant">
             <Markdown text={message.text || ""} />
             {children}
+            {message.taskAction ? <TaskActionCard action={message.taskAction} /> : null}
+            <TaskRefs refs={message.taskRefs} />
             <MediaCards media={message.media} />
             <Citations citations={message.citations} branches={branches} />
             {message.gapLogged ? (

@@ -16,3 +16,17 @@ export const canUseProposals = isStaff;
  * example questions the chat offers.
  */
 export const canUseResearch = isStaff;
+
+/**
+ * Tasks: the server says so in /wizz/me (`tasks.enabled`); older servers without that field fall
+ * back to the staff-role check. Partners never get tasks.
+ */
+export const canUseTasks = (wizz) => {
+    if (!wizz) return false;
+    if (wizz.member?.role === "partner") return false;
+    if (wizz.tasks && typeof wizz.tasks.enabled === "boolean") return wizz.tasks.enabled;
+    return isStaff(wizz);
+};
+
+/** Task role from /wizz/me when present ("owner" | "branch_head" | "team_lead" | "staff"). */
+export const taskRoleOf = (wizz) => wizz?.tasks?.role || (wizz?.isOwner ? "owner" : "staff");

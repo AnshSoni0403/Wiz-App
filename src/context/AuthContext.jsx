@@ -15,6 +15,7 @@ import { getWizzMe } from "../api/wizz.api";
 import { UNAUTHORIZED_EVENT } from "../api/client";
 import { ApiError, toApiError } from "../utils/errors";
 import { clearPrefs, readPref, writePref } from "../utils/storage";
+import { disablePushOnLogout } from "../pwa/push";
 
 const AuthContext = createContext(null);
 
@@ -105,6 +106,8 @@ export const AuthProvider = ({ children }) => {
 
     const logout = useCallback(async () => {
         let softLogout = false;
+        // This device stops receiving task pushes for this account (needs the session, so first).
+        await disablePushOnLogout();
         try {
             await logoutSession();
         } catch (err) {

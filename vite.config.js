@@ -48,6 +48,8 @@ const appConfig = {
                 navigateFallbackAllowlist: [/^\/wizz-app(\/|$)/],
                 navigateFallbackDenylist: [/^\/api\//],
                 cleanupOutdatedCaches: true,
+                // Optional task-notification push ("push" / "notificationclick" handlers, public/push-sw.js).
+                importScripts: ["push-sw.js"],
                 runtimeCaching: [
                     {
                         // Private answers, sessions and signed file links must never be stored offline.

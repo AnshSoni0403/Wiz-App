@@ -3,6 +3,8 @@ import Icon from "../components/Icon";
 import { useAuth } from "../context/AuthContext";
 import { useInstallPrompt } from "../pwa/installPrompt";
 import { AUDIENCE_LABELS, ROLE_LABELS, branchName, initials } from "../utils/format";
+import PushNotificationsCard from "../components/profile/PushNotificationsCard";
+import { canUseTasks } from "../agents/access";
 
 const ProfilePage = () => {
     const { user, wizz, logout } = useAuth();
@@ -46,6 +48,7 @@ const ProfilePage = () => {
                     ) : null}
                 </section>
 
+                {canUseTasks(wizz) ? <PushNotificationsCard /> : null}
 
                 {!standalone && (canInstall || ios) ? (
                     <section className="card">

@@ -1,7 +1,8 @@
 import markUrl from "../assets/images/marwiz-mark.png";
+import NotificationBell from "./NotificationBell";
 
-/** Page header: optional leading action, brand + title, trailing content. */
-const TopBar = ({ leading = null, title = "Wizz", subtitle = null, children = null }) => (
+/** Page header: optional leading action, brand + title, trailing content, then the notification bell. */
+const TopBar = ({ leading = null, title = "Wizz", subtitle = null, children = null, bell = true }) => (
     <header className="topbar">
         <div className="topbar__leading">{leading}</div>
         <div className="topbar__brand">
@@ -11,7 +12,10 @@ const TopBar = ({ leading = null, title = "Wizz", subtitle = null, children = nu
                 {subtitle ? <span className="topbar__subtitle">{subtitle}</span> : null}
             </div>
         </div>
-        <div className="topbar__trailing">{children}</div>
+        <div className="topbar__trailing">
+            {children}
+            {bell ? <NotificationBell /> : null}
+        </div>
     </header>
 );
 

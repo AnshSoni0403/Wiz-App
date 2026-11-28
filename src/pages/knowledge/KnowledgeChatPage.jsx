@@ -14,7 +14,7 @@ import { getConversation, sendChat } from "../../api/wizz.api";
 import { AI_NOT_CONFIGURED_MESSAGE, friendlyMessage, isRetryable, toApiError } from "../../utils/errors";
 import { firstName, localId } from "../../utils/format";
 import { answeredResearch, isActiveRun, isAnswered, normaliseChatResearch } from "../../utils/research";
-import { canUseResearch } from "../../agents/access";
+import { canUseResearch, canUseTasks, taskRoleOf } from "../../agents/access";
 
 const BASE_PATH = "/knowledge";
 // After a research run finishes, the server posts the answer into the conversation. If it isn't
@@ -31,6 +31,9 @@ const fromServerMessage = (m) => ({
     gapLogged: Boolean(m.gapLogged),
     // Web research behind this reply: { jobId, runId, reportId, status, title }, or null.
     research: normaliseChatResearch(m.research),
+    // A task change waiting for confirmation (or already confirmed), and tasks the reply mentions.
+    taskAction: m.taskAction && typeof m.taskAction === "object" && m.taskAction.id ? m.taskAction : null,
+    taskRefs: Array.isArray(m.taskRefs) ? m.taskRefs.filter((t) => t && t._id) : [],
     status: "sent",
 });
 
@@ -367,7 +370,15 @@ const KnowledgeChatPage = () => {
                         </div>
                     ) : null}
 
-                    {empty ? <StarterQuestions name={name} onPick={send} disabled={sending} research={canUseResearch(wizz)} /> : null}
+                    {empty ? (
+                        <StarterQuestions
+                            name={name}
+                            onPick={send}
+                            disabled={sending}
+                            research={canUseResearch(wizz)}
+                            tasks={canUseTasks(wizz) ? taskRoleOf(wizz) : null}
+                        />
+                    ) : null}
 
                     {messages.map((m) =>
                         m.role === "user" ? (
