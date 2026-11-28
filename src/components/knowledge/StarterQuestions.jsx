@@ -1,3 +1,4 @@
+import { Button } from "@mantine/core";
 import Icon from "../Icon";
 import markUrl from "../../assets/images/marwiz-mark.png";
 
@@ -35,10 +36,10 @@ const StarterQuestions = ({ name, onPick, disabled = false, research = false, ta
             </p>
             <div className="starters">
                 {questions.map((q) => (
-                    <button key={q} type="button" className="starter" onClick={() => onPick(q)} disabled={disabled}>
+                    <Button unstyled key={q} type="button" className="starter" onClick={() => onPick(q)} disabled={disabled}>
                         <Icon name={taskQuestions.includes(q) ? "tasks" : "sparkle"} size={16} />
                         <span>{q}</span>
-                    </button>
+                    </Button>
                 ))}
             </div>
         </div>

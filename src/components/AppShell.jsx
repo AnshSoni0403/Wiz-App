@@ -1,3 +1,5 @@
+import { Box, UnstyledButton } from "@mantine/core";
+import markUrl from "../assets/images/marwiz-mark.png";
 import { NavLink, Outlet } from "react-router-dom";
 import Icon from "./Icon";
 import OfflineBanner from "./OfflineBanner";
@@ -6,23 +8,28 @@ import UpdatePrompt from "./UpdatePrompt";
 import NotificationsDrawer from "./NotificationsDrawer";
 import { NotificationsProvider, useNotifications } from "../context/NotificationsContext";
 
-/** Bottom navigation; the Tasks tab carries the unread notification count. */
-const BottomNav = ({ agents }) => {
+/** Primary navigation with a task notification count. */
+const MainNav = ({ agents }) => {
     const n = useNotifications();
     const unread = n?.available ? n.unread : 0;
     return (
         <nav className="bottom-nav" aria-label="Main">
+            <div className="nav-brand">
+                <img src={markUrl} alt="" width="28" height="28" />
+                <span>Wizz</span>
+            </div>
             {agents.map((agent) => {
                 const badge = agent.key === "tasks" && unread > 0;
                 return (
-                    <NavLink
+                    <UnstyledButton
+                        component={NavLink}
                         key={agent.key}
                         to={agent.path}
                         className="bottom-nav__item"
                         aria-label={badge ? `${agent.label}, ${unread} unread notifications` : undefined}
                     >
                         <span className="bottom-nav__icon">
-                            <Icon name={agent.icon} size={22} />
+                            <Icon name={agent.icon} size={19} />
                             {badge ? (
                                 <span className="count-badge count-badge--nav" aria-hidden="true">
                                     {unread > 99 ? "99+" : unread}
@@ -30,37 +37,37 @@ const BottomNav = ({ agents }) => {
                             ) : null}
                         </span>
                         <span>{agent.label}</span>
-                    </NavLink>
+                    </UnstyledButton>
                 );
             })}
-            <NavLink to="/profile" className="bottom-nav__item">
-                <Icon name="user" size={22} />
+            <UnstyledButton component={NavLink} to="/profile" className="bottom-nav__item bottom-nav__profile">
+                <Icon name="user" size={19} />
                 <span>Profile</span>
-            </NavLink>
+            </UnstyledButton>
         </nav>
     );
 };
 
 /**
  * Signed-in layout: offline banner, the active screen, install / update prompts, the notification
- * inbox and the bottom navigation (one tab per enabled agent + Profile).
+ * inbox and primary navigation (one tab per enabled agent + Profile).
  */
 const AppShell = ({ agents }) => {
     const hasTasks = agents.some((a) => a.key === "tasks");
     const tasksPath = agents.find((a) => a.key === "tasks")?.path || "/tasks";
     return (
         <NotificationsProvider enabled={hasTasks}>
-            <div className="app">
+            <Box className="app">
                 <OfflineBanner />
-                <main className="app-main">
+                <Box className="app-main" component="main">
                     <Outlet />
-                </main>
+                </Box>
                 <div className="app-toasts">
                     <UpdatePrompt />
                     <InstallPrompt />
                 </div>
-                <BottomNav agents={agents} />
-            </div>
+                <MainNav agents={agents} />
+            </Box>
             {hasTasks ? <NotificationsDrawer tasksPath={tasksPath} /> : null}
         </NotificationsProvider>
     );

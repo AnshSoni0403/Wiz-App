@@ -1,3 +1,4 @@
+import { Button, SegmentedControl, TextInput } from "@mantine/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import TopBar from "../../components/TopBar";
@@ -211,44 +212,37 @@ const TaskListScreen = ({ access, basePath }) => {
 
     return (
         <div className="page">
-            <TopBar title="Tasks" subtitle={mode === "team" ? "Team" : "My tasks"} />
+            <TopBar title="Tasks">
+                <Button unstyled type="button" className="btn btn--primary new-task-btn" onClick={() => setNewOpen(true)} aria-label="New task">
+                    <Icon name="plus" size={18} /> <span>New task</span>
+                </Button>
+            </TopBar>
             <div className="page__body tasks-body">
                 <LiveToast toast={toast} onClose={clearToast} />
 
                 {manager ? (
-                    <div className="segmented" role="tablist" aria-label="Task view">
-                        <button
-                            type="button"
-                            role="tab"
-                            aria-selected={mode === "mine"}
-                            onClick={() => setParam({ view: null, seg: null, team: null, assignee: null })}
-                        >
-                            My tasks
-                        </button>
-                        <button
-                            type="button"
-                            role="tab"
-                            aria-selected={mode === "team"}
-                            onClick={() => setParam({ view: "team", seg: null })}
-                        >
-                            Team
-                        </button>
-                    </div>
+                    <SegmentedControl
+                        className="workspace-segments"
+                        aria-label="Task view"
+                        value={mode}
+                        data={[{ value: "mine", label: "My tasks" }, { value: "team", label: "Team" }]}
+                        onChange={(view) => setParam(view === "mine"
+                            ? { view: null, seg: null, team: null, assignee: null }
+                            : { view: "team", seg: null })}
+                    />
                 ) : null}
 
                 <div className="tasks-toolbar">
-                    <label className="search-field">
-                        <Icon name="search" size={18} />
-                        <span className="sr-only">Search tasks</span>
-                        <input
-                            type="search"
-                            className="input"
-                            placeholder="Search tasks or #number"
-                            value={q}
-                            onChange={(e) => setQ(e.target.value)}
-                        />
-                    </label>
-                    <button
+                    <TextInput
+                        className="tasks-search"
+                        type="search"
+                        aria-label="Search tasks"
+                        placeholder="Search tasks or #number"
+                        leftSection={<Icon name="search" size={16} />}
+                        value={q}
+                        onChange={(e) => setQ(e.target.value)}
+                    />
+                    <Button unstyled
                         type="button"
                         className="btn btn--ghost filter-btn"
                         onClick={() => {
@@ -260,11 +254,7 @@ const TaskListScreen = ({ access, basePath }) => {
                         <Icon name="list" size={18} />
                         <span>Filter</span>
                         {activeFilterCount ? <span className="count-badge count-badge--inline">{activeFilterCount}</span> : null}
-                    </button>
-                    <button type="button" className="btn btn--primary new-task-btn" onClick={() => setNewOpen(true)}>
-                        <Icon name="plus" size={18} />
-                        <span>New</span>
-                    </button>
+                    </Button>
                 </div>
 
                 {mode === "team" && teams.length ? (
@@ -286,7 +276,7 @@ const TaskListScreen = ({ access, basePath }) => {
                     {segments.map((s) => {
                         const count = countFor(s);
                         return (
-                            <button
+                            <Button unstyled
                                 key={s.key}
                                 type="button"
                                 role="tab"
@@ -296,7 +286,7 @@ const TaskListScreen = ({ access, basePath }) => {
                             >
                                 {s.label}
                                 {count ? <span className="seg-pill__count">{count}</span> : null}
-                            </button>
+                            </Button>
                         );
                     })}
                 </div>
@@ -328,9 +318,9 @@ const TaskListScreen = ({ access, basePath }) => {
                                 <div>
                                     <p>{friendlyMessage(error)}</p>
                                     {isRetryable(error) || toApiError(error).kind !== "http" || toApiError(error).status >= 500 ? (
-                                        <button type="button" className="btn btn--secondary btn--sm" onClick={() => load(1)}>
+                                        <Button unstyled type="button" className="btn btn--secondary btn--sm" onClick={() => load(1)}>
                                             Retry
-                                        </button>
+                                        </Button>
                                     ) : null}
                                 </div>
                             </div>
@@ -353,7 +343,7 @@ const TaskListScreen = ({ access, basePath }) => {
                                 <p className="empty-state__title">{empty.title}</p>
                                 <p className="muted small">{empty.body}</p>
                                 {filtered ? (
-                                    <button
+                                    <Button unstyled
                                         type="button"
                                         className="btn btn--ghost btn--sm"
                                         onClick={() => {
@@ -363,7 +353,7 @@ const TaskListScreen = ({ access, basePath }) => {
                                         }}
                                     >
                                         Clear filters
-                                    </button>
+                                    </Button>
                                 ) : null}
                             </div>
                         ) : null}
@@ -382,9 +372,9 @@ const TaskListScreen = ({ access, basePath }) => {
                         ) : null}
 
                         {!loading && items.length < total ? (
-                            <button type="button" className="btn btn--ghost btn--block" onClick={() => load(page + 1)} disabled={loadingMore}>
+                            <Button unstyled type="button" className="btn btn--ghost btn--block" onClick={() => load(page + 1)} disabled={loadingMore}>
                                 {loadingMore ? "Loading…" : `Load more (${total - items.length} more)`}
-                            </button>
+                            </Button>
                         ) : null}
                     </section>
                 )}
@@ -396,14 +386,14 @@ const TaskListScreen = ({ access, basePath }) => {
                 onClose={() => setFiltersOpen(false)}
                 footer={
                     <div className="row row--end">
-                        <button
+                        <Button unstyled
                             type="button"
                             className="btn btn--ghost"
                             onClick={() => setDraftFilters({ status: "", priority: "", scope: "mine", sort: "" })}
                         >
                             Reset
-                        </button>
-                        <button
+                        </Button>
+                        <Button unstyled
                             type="button"
                             className="btn btn--primary"
                             onClick={() => {
@@ -412,7 +402,7 @@ const TaskListScreen = ({ access, basePath }) => {
                             }}
                         >
                             Show tasks
-                        </button>
+                        </Button>
                     </div>
                 }
             >

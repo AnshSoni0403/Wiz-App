@@ -1,3 +1,4 @@
+import { ActionIcon, Button } from "@mantine/core";
 import { useState } from "react";
 import Icon from "./Icon";
 import { useInstallPrompt } from "../pwa/installPrompt";
@@ -39,7 +40,7 @@ const InstallPrompt = () => {
             </div>
             <div className="toast__actions">
                 {canInstall ? (
-                    <button
+                    <Button unstyled
                         type="button"
                         className="btn btn--primary btn--sm"
                         onClick={async () => {
@@ -48,11 +49,11 @@ const InstallPrompt = () => {
                         }}
                     >
                         Install
-                    </button>
+                    </Button>
                 ) : null}
-                <button type="button" className="icon-btn" onClick={dismiss} aria-label="Dismiss">
+                <ActionIcon unstyled type="button" className="icon-btn" onClick={dismiss} aria-label="Dismiss">
                     <Icon name="close" size={18} />
-                </button>
+                </ActionIcon>
             </div>
         </div>
     );

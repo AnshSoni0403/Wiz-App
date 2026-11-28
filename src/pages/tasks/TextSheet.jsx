@@ -1,3 +1,4 @@
+import { Button } from "@mantine/core";
 import { useEffect, useId, useState } from "react";
 import Sheet from "../../components/Sheet";
 import Icon from "../../components/Icon";
@@ -56,12 +57,12 @@ const TextSheet = ({
             busy={busy}
             footer={
                 <div className="row row--end">
-                    <button type="button" className="btn btn--ghost" onClick={onClose} disabled={busy}>
+                    <Button unstyled type="button" className="btn btn--ghost" onClick={onClose} disabled={busy}>
                         Cancel
-                    </button>
-                    <button type="submit" form={fieldId} className="btn btn--primary" disabled={busy || (required && !text.trim())}>
+                    </Button>
+                    <Button unstyled type="submit" form={fieldId} className="btn btn--primary" disabled={busy || (required && !text.trim())}>
                         {busy ? "Saving…" : submitLabel}
-                    </button>
+                    </Button>
                 </div>
             }
         >

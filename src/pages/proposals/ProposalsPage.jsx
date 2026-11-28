@@ -1,3 +1,4 @@
+import { Button, Paper, SegmentedControl } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import * as api from "../../api/proposals.api";
@@ -58,9 +59,9 @@ function AnswerForm({ question, initial, busy, onSave, onCancel }) {
                     placeholder={type === "text-list" || type === "multi" ? "Separate detections with commas" : "Enter your answer"}
                     value={text} onChange={event => setText(event.target.value)} />}
                 <div className="proposal-actions">
-                    <button className="btn btn--primary" disabled={!ready}>{onCancel ? "Save changes" : "Save and continue"}</button>
-                    <button className="btn btn--secondary" type="button" onClick={() => onSave(null, true)}>Answer later</button>
-                    {onCancel && <button className="btn btn--ghost" type="button" onClick={onCancel}>Cancel</button>}
+                    <Button unstyled type="submit" className="btn btn--primary" disabled={!ready}>{onCancel ? "Save changes" : "Save and continue"}</Button>
+                    <Button unstyled className="btn btn--secondary" type="button" onClick={() => onSave(null, true)}>Answer later</Button>
+                    {onCancel && <Button unstyled className="btn btn--ghost" type="button" onClick={onCancel}>Cancel</Button>}
                 </div>
             </fieldset>
         </form>
@@ -84,41 +85,41 @@ function Review({ draft, busy, run }) {
     const doc = draft.googleDoc;
     const url = docsLink(doc?.url);
     return <>
-        <section className="proposal-card">
+        <Paper component="section" className="proposal-card">
             <h2>Price Master</h2>
             {pricingError ? <p role="alert">{pricingError}</p> : !pricing ? <p role="status">Checking licence prices…</p>
                 : pricing.lines?.length ? <ul className="proposal-prices">{pricing.lines.map(line =>
                     <li key={line.detectionId}><span>{line.detection}</span><strong>{line.unitPriceText}</strong></li>)}</ul>
                     : <p>No licence prices yet for this draft.</p>}
             {!!pricing?.unpriced?.length && <p>Missing prices for {pricing.unpriced.join(", ")}.</p>}
-        </section>
-        <section className="proposal-card">
+        </Paper>
+        <Paper component="section" className="proposal-card">
             <h2>Write the proposal</h2>
             <label htmlFor="proposal-format">Proposal format</label>
             <select id="proposal-format" value={mode} disabled={busy} onChange={event => setMode(event.target.value)}>
                 {MODES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
-            <div className="proposal-actions"><button className="btn btn--primary" disabled={busy} onClick={() => run("Writing proposal…", () => api.writeProposal(draft.id, mode))}>
+            <div className="proposal-actions"><Button unstyled className="btn btn--primary" disabled={busy} onClick={() => run("Writing proposal…", () => api.writeProposal(draft.id, mode))}>
                 {generated ? "Rewrite proposal" : "Write proposal"}
-            </button></div>
+            </Button></div>
             {generated && !generated.current && <p>Details changed after this version was written.</p>}
             {generated?.checks?.length > 0 && <details className="proposal-details"><summary>Review notes ({generated.checks.length})</summary>
                 <ul>{generated.checks.map((check, index) => <li key={index}>{check.message || check.label || check.text}</li>)}</ul>
             </details>}
             {generated?.markdown && <div className="proposal-document"><Markdown text={generated.markdown} /></div>}
-        </section>
-        <section className="proposal-card">
+        </Paper>
+        <Paper component="section" className="proposal-card">
             <h2>Google Docs</h2>
             {doc && !doc.current && <p>Details changed since this Doc was created.</p>}
             {!!doc?.remaining?.length && <p>{doc.remaining.length} fields still need to be filled in the Doc.</p>}
             <div className="proposal-actions">
                 {url && <a className="btn btn--primary" href={url} target="_blank" rel="noreferrer">Open Google Doc</a>}
-                {(!doc?.current || doc.source !== "template") && <button className="btn btn--secondary" disabled={busy}
-                    onClick={() => run("Creating Google Doc…", () => api.createProposalDoc(draft.id, "template"))}>Create from template</button>}
-                {generated?.current && (!doc?.current || doc.source !== "generated") && <button className="btn btn--secondary" disabled={busy}
-                    onClick={() => run("Creating Google Doc…", () => api.createProposalDoc(draft.id, "generated"))}>Export written draft</button>}
+                {(!doc?.current || doc.source !== "template") && <Button unstyled className="btn btn--secondary" disabled={busy}
+                    onClick={() => run("Creating Google Doc…", () => api.createProposalDoc(draft.id, "template"))}>Create from template</Button>}
+                {generated?.current && (!doc?.current || doc.source !== "generated") && <Button unstyled className="btn btn--secondary" disabled={busy}
+                    onClick={() => run("Creating Google Doc…", () => api.createProposalDoc(draft.id, "generated"))}>Export written draft</Button>}
             </div>
-        </section>
+        </Paper>
     </>;
 }
 
@@ -138,24 +139,33 @@ function DraftView({ draft, busy, run }) {
             <h1>{titleOf(draft)}</h1>
             <p>{BRANCHES[draft.branch] || draft.branch} · {answered.length - deferred} answers saved{deferred ? ` · ${deferred} to confirm` : ""}</p>
         </header>
-        <nav className="proposal-tabs" aria-label="Proposal workflow">
-            {[["details", "Details"], ["chat", "Ask Wizz"], ["review", "Review & export"]].map(([id, label]) =>
-                <button key={id} type="button" aria-pressed={section === id} onClick={() => setSection(id)} disabled={busy}>{label}</button>)}
-        </nav>
-        {section === "details" && <section className="proposal-card">
+        <SegmentedControl
+            className="workspace-segments proposal-tabs"
+            aria-label="Proposal workflow"
+            fullWidth
+            value={section}
+            onChange={setSection}
+            disabled={busy}
+            data={[
+                { value: "details", label: "Details" },
+                { value: "chat", label: "Ask Wizz" },
+                { value: "review", label: "Review & export" },
+            ]}
+        />
+        {section === "details" && <Paper component="section" className="proposal-card">
             {current ? <AnswerForm key={`${draft.revision}-${current.id}`} question={current} initial={draft.answers[current.id]} busy={busy}
                 onSave={save} onCancel={edit ? () => setEdit(null) : null} />
                 : <><h2>Review your details</h2><p>{deferred ? "You can fill in deferred answers below." : "Your brief is ready to review."}</p>
-                    <button className="btn btn--primary" onClick={() => setSection("review")} disabled={busy}>Review & export</button></>}
+                    <Button unstyled className="btn btn--primary" onClick={() => setSection("review")} disabled={busy}>Review & export</Button></>}
             {answered.length > 0 && <details className="proposal-details" open={edit ? true : undefined}>
                 <summary>Saved answers ({answered.length})</summary>
                 <ul className="proposal-answers">{answered.map(question => <li key={question.id}>
                     <div><strong>{question.label}</strong><span>{answerText(draft.answers[question.id])}</span></div>
-                    <button type="button" className="btn btn--ghost btn--sm" onClick={() => setEdit(question)} disabled={busy}>Edit</button>
+                    <Button unstyled type="button" className="btn btn--ghost btn--sm" onClick={() => setEdit(question)} disabled={busy}>Edit</Button>
                 </li>)}</ul>
             </details>}
-        </section>}
-        {section === "chat" && <section className="proposal-card">
+        </Paper>}
+        {section === "chat" && <Paper component="section" className="proposal-card">
             <h2>Ask Wizz about this draft</h2>
             {!draft.chat?.length && <p>Paste a brief or ask Wizz to update a detail. For example, “Set the site count to two and add email alerts.”</p>}
             <ol className="proposal-chat" aria-label="Draft conversation">{draft.chat?.map((turn, index) =>
@@ -170,9 +180,9 @@ function DraftView({ draft, busy, run }) {
             }}>
                 <label htmlFor="proposal-chat-input">Message</label>
                 <textarea id="proposal-chat-input" rows="3" maxLength="8000" value={message} disabled={busy} onChange={event => setMessage(event.target.value)} />
-                <div className="proposal-actions"><button className="btn btn--primary" disabled={busy || !message.trim()}><Icon name="send" size={16} /> Send</button></div>
+                <div className="proposal-actions"><Button unstyled type="submit" className="btn btn--primary" disabled={busy || !message.trim()}><Icon name="send" size={16} /> Send</Button></div>
             </form>
-        </section>}
+        </Paper>}
         {section === "review" && <Review draft={draft} busy={busy} run={run} />}
     </>;
 }
@@ -223,10 +233,9 @@ export default function ProposalsPage() {
                 {busy && <p className="proposal-status" role="status">{busy}</p>}
                 {!drafts ? <p className="proposal-status" role="status">Loading drafts…</p> : draftId ? draft
                     ? <DraftView key={draft.id} draft={draft} busy={Boolean(busy) || conflict} run={run} />
-                    : <section className="proposal-card"><h1>Draft unavailable</h1><Link to="/proposals">Back to your drafts</Link></section>
+                    : <Paper component="section" className="proposal-card"><h1>Draft unavailable</h1><Link to="/proposals">Back to your drafts</Link></Paper>
                     : <>
-                        <section className="proposal-hero">
-                            <Icon name="proposal" size={31} />
+                        <Paper component="section" className="proposal-hero">
                             <h1>Make a proposal</h1>
                             <p>Capture the brief, review licence prices, and prepare a Google Doc.</p>
                             <form className="proposal-start" onSubmit={event => {
@@ -237,9 +246,9 @@ export default function ProposalsPage() {
                                 <div className="proposal-actions"><select id="proposal-branch" value={chosenBranch} disabled={Boolean(busy)} onChange={event => setBranch(event.target.value)}>
                                     <option value="">{branches.length ? "Choose a branch" : "No branches available"}</option>
                                     {branches.map(code => <option key={code} value={code}>{BRANCHES[code]}</option>)}
-                                </select><button className="btn btn--primary" disabled={Boolean(busy) || !chosenBranch}><Icon name="plus" size={18} /> New proposal</button></div>
+                                </select><Button unstyled type="submit" className="btn btn--primary" disabled={Boolean(busy) || !chosenBranch}><Icon name="plus" size={18} /> New proposal</Button></div>
                             </form>
-                        </section>
+                        </Paper>
                         <h2 className="proposal-list-title">Your drafts</h2>
                         {!drafts.length && <p className="proposal-empty">Your saved proposals will appear here.</p>}
                         <ul className="proposal-list">{drafts.map(item => <li key={item.id}><Link to={`/proposals/${item.id}`}>

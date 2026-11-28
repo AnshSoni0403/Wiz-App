@@ -1,3 +1,4 @@
+import { Button, PasswordInput, TextInput } from "@mantine/core";
 import { useState } from "react";
 import logoUrl from "../assets/images/marwiz-logo-gold.png";
 import { useAuth } from "../context/AuthContext";
@@ -13,7 +14,6 @@ const LoginPage = () => {
     const online = useOnlineStatus();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState("");
 
@@ -48,43 +48,27 @@ const LoginPage = () => {
                 <p className="auth-card__subtitle">Marwiz Vision's AI assistant. Sign in with your Marwiz Vision account.</p>
 
                 <form className="form" onSubmit={onSubmit} noValidate>
-                    <label className="field">
-                        <span className="field__label">Email</span>
-                        <input
-                            className="input"
-                            type="email"
-                            inputMode="email"
-                            autoComplete="username"
-                            autoCapitalize="none"
-                            spellCheck="false"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            disabled={busy}
-                            required
-                        />
-                    </label>
-                    <label className="field">
-                        <span className="field__label">Password</span>
-                        <div className="input-group">
-                            <input
-                                className="input"
-                                type={showPassword ? "text" : "password"}
-                                autoComplete="current-password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                disabled={busy}
-                                required
-                            />
-                            <button
-                                type="button"
-                                className="input-group__btn"
-                                onClick={() => setShowPassword((v) => !v)}
-                                aria-pressed={showPassword}
-                            >
-                                {showPassword ? "Hide" : "Show"}
-                            </button>
-                        </div>
-                    </label>
+                    <TextInput
+                        label="Email"
+                        type="email"
+                        inputMode="email"
+                        autoComplete="username"
+                        autoCapitalize="none"
+                        spellCheck="false"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        disabled={busy}
+                        required
+                    />
+                    <PasswordInput
+                        label="Password"
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={busy}
+                        required
+                        visibilityToggleButtonProps={{ "aria-label": "Show or hide password" }}
+                    />
 
                     {error ? (
                         <div className="alert alert--danger" role="alert">
@@ -92,9 +76,9 @@ const LoginPage = () => {
                         </div>
                     ) : null}
 
-                    <button type="submit" className="btn btn--primary btn--block" disabled={busy || !online}>
+                    <Button unstyled type="submit" className="btn btn--primary btn--block" disabled={busy || !online}>
                         {busy ? "Signing in…" : "Sign in"}
-                    </button>
+                    </Button>
                 </form>
                 <p className="auth-card__hint">Forgot your password? Reset it from the Marwiz Vision Admin sign-in page.</p>
             </div>

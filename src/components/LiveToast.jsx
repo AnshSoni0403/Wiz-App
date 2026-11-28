@@ -1,3 +1,4 @@
+import { ActionIcon } from "@mantine/core";
 import Icon from "./Icon";
 
 /** The visible + announced line for useToast(). Always mounted so the live region exists before text arrives. */
@@ -8,9 +9,9 @@ const LiveToast = ({ toast, onClose }) => (
                 <Icon name={toast.tone === "danger" ? "alert" : "check"} size={16} />
                 <span>{toast.text}</span>
                 {onClose ? (
-                    <button type="button" className="icon-btn icon-btn--sm" onClick={onClose} aria-label="Dismiss">
+                    <ActionIcon unstyled type="button" className="icon-btn icon-btn--sm" onClick={onClose} aria-label="Dismiss">
                         <Icon name="close" size={14} />
-                    </button>
+                    </ActionIcon>
                 ) : null}
             </div>
         ) : null}

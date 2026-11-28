@@ -1,3 +1,4 @@
+import { Button } from "@mantine/core";
 import { useState } from "react";
 import markUrl from "../assets/images/marwiz-mark.png";
 import Icon from "../components/Icon";
@@ -17,7 +18,7 @@ const NoAccessPage = () => {
                 <h1 className="auth-card__title">{name ? `Hi ${name}` : "No Wizz access"}</h1>
                 <p className="auth-card__message">{NO_ACCESS_MESSAGE}</p>
                 <div className="stack">
-                    <button
+                    <Button unstyled
                         type="button"
                         className="btn btn--secondary btn--block"
                         disabled={busy}
@@ -28,10 +29,10 @@ const NoAccessPage = () => {
                         }}
                     >
                         <Icon name="refresh" size={18} /> {busy ? "Checking…" : "Check again"}
-                    </button>
-                    <button type="button" className="btn btn--primary btn--block" onClick={logout}>
+                    </Button>
+                    <Button unstyled type="button" className="btn btn--primary btn--block" onClick={logout}>
                         <Icon name="logout" size={18} /> Log out
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

@@ -1,3 +1,4 @@
+import { ActionIcon, Button, Paper } from "@mantine/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import TopBar from "../../components/TopBar";
@@ -143,9 +144,9 @@ const TaskDetailScreen = ({ basePath }) => {
                             <p>{e.status === 404 ? "This task doesn't exist or you no longer have access to it." : friendlyMessage(error)}</p>
                             <div className="row">
                                 {isRetryable(error) || e.kind !== "http" ? (
-                                    <button type="button" className="btn btn--secondary btn--sm" onClick={() => load()}>
+                                    <Button unstyled type="button" className="btn btn--secondary btn--sm" onClick={() => load()}>
                                         Retry
-                                    </button>
+                                    </Button>
                                 ) : null}
                                 <Link className="btn btn--ghost btn--sm" to={basePath}>
                                     Back to tasks
@@ -238,7 +239,7 @@ const TaskDetailScreen = ({ basePath }) => {
     return (
         <div className="page">
             <TopBar title={task.number ? `Task #${task.number}` : "Task"} leading={<BackLink basePath={basePath} />}>
-                <button
+                <ActionIcon unstyled
                     type="button"
                     className="icon-btn"
                     onClick={() => quiet(run("watch", () => setWatching(task._id, !p.isWatcher), p.isWatcher ? "Stopped watching" : "Watching this task"))}
@@ -248,13 +249,13 @@ const TaskDetailScreen = ({ basePath }) => {
                     title={p.isWatcher ? "Watching" : "Watch"}
                 >
                     <Icon name="eye" size={20} className={p.isWatcher ? "is-on" : ""} />
-                </button>
+                </ActionIcon>
             </TopBar>
 
             <div className="page__body task-detail">
                 <LiveToast toast={toast} onClose={clearToast} />
 
-                <section className="card task-head">
+                <Paper component="section" className="card task-head">
                     <div className="task-card__top">
                         <StatusChip task={task} />
                         <PriorityTag priority={task.priority} />
@@ -297,7 +298,7 @@ const TaskDetailScreen = ({ basePath }) => {
                             </div>
                         ) : null}
                     </dl>
-                </section>
+                </Paper>
 
                 {task.needsFollowUp ? (
                     <div className="notice notice--warning" role="note">
@@ -310,19 +311,19 @@ const TaskDetailScreen = ({ basePath }) => {
                             {task.followUp?.note ? <p>“{task.followUp.note}”</p> : null}
                             <div className="row">
                                 {p.isAssignee ? (
-                                    <button type="button" className="btn btn--secondary btn--sm" onClick={() => commentRef.current?.focus()}>
+                                    <Button unstyled type="button" className="btn btn--secondary btn--sm" onClick={() => commentRef.current?.focus()}>
                                         Reply with an update
-                                    </button>
+                                    </Button>
                                 ) : null}
                                 {p.canManage ? (
-                                    <button
+                                    <Button unstyled
                                         type="button"
                                         className="btn btn--ghost btn--sm"
                                         disabled={Boolean(busy)}
                                         onClick={() => quiet(run("followup", () => setFollowUp(task._id, false), "Request withdrawn"))}
                                     >
                                         Withdraw request
-                                    </button>
+                                    </Button>
                                 ) : null}
                             </div>
                         </div>
@@ -347,26 +348,26 @@ const TaskDetailScreen = ({ basePath }) => {
                 ) : null}
 
                 {reviewing ? (
-                    <section className="card card--accent" aria-label="Review">
+                    <Paper component="section" className="card card--accent" aria-label="Review">
                         <h2 className="card__title">Ready for your review</h2>
                         <p className="muted small">
                             {names.join(", ") || "The assignee"} marked this done{task.completedAt ? ` ${relativeTime(task.completedAt)}` : ""}. Check the
                             updates and evidence below.
                         </p>
                         <div className="row">
-                            <button
+                            <Button unstyled
                                 type="button"
                                 className="btn btn--primary"
                                 disabled={Boolean(busy)}
                                 onClick={() => quiet(run("review", () => reviewTask(task._id, "approve"), "Task verified"))}
                             >
                                 <Icon name="check" size={18} /> Verify
-                            </button>
-                            <button type="button" className="btn btn--ghost" disabled={Boolean(busy)} onClick={() => setSheet({ kind: "reviewReopen" })}>
+                            </Button>
+                            <Button unstyled type="button" className="btn btn--ghost" disabled={Boolean(busy)} onClick={() => setSheet({ kind: "reviewReopen" })}>
                                 Reopen
-                            </button>
+                            </Button>
                         </div>
-                    </section>
+                    </Paper>
                 ) : null}
 
                 {statusButtons.length || p.canManage ? (
@@ -383,19 +384,19 @@ const TaskDetailScreen = ({ basePath }) => {
                             </button>
                         ))}
                         {p.canManage && !["completed", "verified", "cancelled", "declined"].includes(task.status) && !task.needsFollowUp ? (
-                            <button type="button" className="btn btn--ghost" disabled={Boolean(busy)} onClick={() => setSheet({ kind: "followup" })}>
+                            <Button unstyled type="button" className="btn btn--ghost" disabled={Boolean(busy)} onClick={() => setSheet({ kind: "followup" })}>
                                 <Icon name="flag" size={16} /> Request update
-                            </button>
+                            </Button>
                         ) : null}
                         {p.canManage ? (
-                            <button type="button" className="btn btn--ghost" disabled={Boolean(busy)} onClick={() => setSheet({ kind: "edit" })}>
+                            <Button unstyled type="button" className="btn btn--ghost" disabled={Boolean(busy)} onClick={() => setSheet({ kind: "edit" })}>
                                 Edit
-                            </button>
+                            </Button>
                         ) : null}
                     </section>
                 ) : null}
 
-                <section className="card" aria-labelledby="checklist-title">
+                <Paper component="section" className="card" aria-labelledby="checklist-title">
                     <h2 className="card__title" id="checklist-title">
                         Checklist {checklist.length ? <span className="muted small">{done}/{checklist.length}</span> : null}
                     </h2>
@@ -411,7 +412,7 @@ const TaskDetailScreen = ({ basePath }) => {
                                         </span>
                                     </label>
                                     {p.canManage ? (
-                                        <button
+                                        <ActionIcon unstyled
                                             type="button"
                                             className="icon-btn icon-btn--sm"
                                             aria-label={`Remove “${item.text}”`}
@@ -419,7 +420,7 @@ const TaskDetailScreen = ({ basePath }) => {
                                             onClick={() => quiet(run(`item-del-${item._id}`, () => deleteChecklistItem(task._id, item._id), "Item removed"))}
                                         >
                                             <Icon name="trash" size={14} />
-                                        </button>
+                                        </ActionIcon>
                                     ) : null}
                                 </li>
                             ))}
@@ -440,14 +441,14 @@ const TaskDetailScreen = ({ basePath }) => {
                                 placeholder="Add an item"
                                 onChange={(e) => setNewItem(e.target.value)}
                             />
-                            <button type="submit" className="btn btn--secondary" disabled={!newItem.trim() || Boolean(busy)}>
+                            <Button unstyled type="submit" className="btn btn--secondary" disabled={!newItem.trim() || Boolean(busy)}>
                                 Add
-                            </button>
+                            </Button>
                         </form>
                     ) : null}
-                </section>
+                </Paper>
 
-                <section className="card" aria-labelledby="evidence-title">
+                <Paper component="section" className="card" aria-labelledby="evidence-title">
                     <h2 className="card__title" id="evidence-title">
                         Evidence & files
                     </h2>
@@ -473,7 +474,7 @@ const TaskDetailScreen = ({ basePath }) => {
                                             </span>
                                         </a>
                                         {(a.canDelete ?? p.canManage) ? (
-                                            <button
+                                            <ActionIcon unstyled
                                                 type="button"
                                                 className="icon-btn icon-btn--sm"
                                                 aria-label={`Remove ${a.name || "attachment"}`}
@@ -485,7 +486,7 @@ const TaskDetailScreen = ({ basePath }) => {
                                                 }}
                                             >
                                                 <Icon name="trash" size={14} />
-                                            </button>
+                                            </ActionIcon>
                                         ) : null}
                                     </li>
                                 );
@@ -498,21 +499,21 @@ const TaskDetailScreen = ({ basePath }) => {
                         <div className="row">
                             <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />
                             <input ref={fileRef} type="file" accept={ACCEPT} hidden onChange={onFile} />
-                            <button type="button" className="btn btn--secondary btn--sm" disabled={Boolean(busy)} onClick={() => cameraRef.current?.click()}>
+                            <Button unstyled type="button" className="btn btn--secondary btn--sm" disabled={Boolean(busy)} onClick={() => cameraRef.current?.click()}>
                                 <Icon name="camera" size={16} /> Photo
-                            </button>
-                            <button type="button" className="btn btn--secondary btn--sm" disabled={Boolean(busy)} onClick={() => fileRef.current?.click()}>
+                            </Button>
+                            <Button unstyled type="button" className="btn btn--secondary btn--sm" disabled={Boolean(busy)} onClick={() => fileRef.current?.click()}>
                                 <Icon name="paperclip" size={16} /> File
-                            </button>
-                            <button type="button" className="btn btn--ghost btn--sm" disabled={Boolean(busy)} onClick={() => setSheet({ kind: "link" })}>
+                            </Button>
+                            <Button unstyled type="button" className="btn btn--ghost btn--sm" disabled={Boolean(busy)} onClick={() => setSheet({ kind: "link" })}>
                                 <Icon name="link" size={16} /> Link
-                            </button>
+                            </Button>
                             {busy === "attach" ? <span className="muted small" role="status">Uploading…</span> : null}
                         </div>
                     ) : null}
-                </section>
+                </Paper>
 
-                <section className="card" aria-labelledby="activity-title">
+                <Paper component="section" className="card" aria-labelledby="activity-title">
                     <h2 className="card__title" id="activity-title">
                         Updates & history
                     </h2>
@@ -538,7 +539,7 @@ const TaskDetailScreen = ({ basePath }) => {
                     ) : (
                         <p className="muted small">No updates yet.</p>
                     )}
-                </section>
+                </Paper>
 
                 {p.canComment !== false ? (
                     <form className="task-composer" onSubmit={sendComment}>
@@ -556,10 +557,10 @@ const TaskDetailScreen = ({ basePath }) => {
                             placeholder={task.needsFollowUp && p.isAssignee ? "Write your update…" : "Add a comment or follow-up…"}
                             onChange={(e) => setComment(e.target.value)}
                         />
-                        <button type="submit" className="btn btn--primary" disabled={!comment.trim() || Boolean(busy)} aria-label="Send">
+                        <Button unstyled type="submit" className="btn btn--primary" disabled={!comment.trim() || Boolean(busy)} aria-label="Send">
                             <Icon name="send" size={18} />
                             <span className="hide-narrow">{busy === "comment" ? "Sending…" : "Send"}</span>
-                        </button>
+                        </Button>
                     </form>
                 ) : null}
             </div>
@@ -686,12 +687,12 @@ const EditSheet = ({ open, task, onClose, onSave }) => {
             busy={busy}
             footer={
                 <div className="row row--end">
-                    <button type="button" className="btn btn--ghost" onClick={onClose} disabled={busy}>
+                    <Button unstyled type="button" className="btn btn--ghost" onClick={onClose} disabled={busy}>
                         Cancel
-                    </button>
-                    <button type="submit" form="edit-task-form" className="btn btn--primary" disabled={busy}>
+                    </Button>
+                    <Button unstyled type="submit" form="edit-task-form" className="btn btn--primary" disabled={busy}>
                         {busy ? "Saving…" : "Save"}
-                    </button>
+                    </Button>
                 </div>
             }
         >

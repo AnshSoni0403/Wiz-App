@@ -1,3 +1,4 @@
+import { ActionIcon, Avatar, Button, Paper } from "@mantine/core";
 import TopBar from "../components/TopBar";
 import Icon from "../components/Icon";
 import { useAuth } from "../context/AuthContext";
@@ -17,12 +18,16 @@ const ProfilePage = () => {
 
     return (
         <div className="page">
-            <TopBar title="Profile" />
-            <div className="page__body">
-                <section className="card profile-card">
-                    <div className="avatar" aria-hidden="true">
+            <TopBar title="Profile">
+                <ActionIcon unstyled className="icon-btn" onClick={logout} aria-label="Log out" title="Log out">
+                    <Icon name="logout" size={18} />
+                </ActionIcon>
+            </TopBar>
+            <div className="page__body profile-settings">
+                <Paper component="section" className="card profile-card">
+                    <Avatar className="avatar" color="gold" aria-hidden="true">
                         {initials(name)}
-                    </div>
+                    </Avatar>
                     <div className="profile-card__text">
                         <h2 className="profile-card__name">{name}</h2>
                         {email ? <div className="muted">{email}</div> : null}
@@ -31,9 +36,9 @@ const ProfilePage = () => {
                             {wizz?.isOwner ? <span className="badge badge--soft">Full access</span> : null}
                         </div>
                     </div>
-                </section>
+                </Paper>
 
-                <section className="card">
+                <Paper component="section" className="card">
                     <h3 className="card__title">Branches</h3>
                     <div className="chip-row">
                         {memberBranches.map((code) => (
@@ -46,29 +51,26 @@ const ProfilePage = () => {
                     {member.maxAudience ? (
                         <p className="muted small">Wizz answers from {AUDIENCE_LABELS[member.maxAudience] || member.maxAudience}.</p>
                     ) : null}
-                </section>
+                </Paper>
 
                 {canUseTasks(wizz) ? <PushNotificationsCard /> : null}
 
                 {!standalone && (canInstall || ios) ? (
-                    <section className="card">
+                    <Paper component="section" className="card">
                         <h3 className="card__title">Install the app</h3>
                         {canInstall ? (
-                            <button type="button" className="btn btn--secondary" onClick={() => promptInstall()}>
+                            <Button unstyled type="button" className="btn btn--secondary" onClick={() => promptInstall()}>
                                 <Icon name="download" size={18} /> Install Wizz
-                            </button>
+                            </Button>
                         ) : (
                             <p className="muted small">
                                 In Safari, tap <Icon name="share" size={14} className="inline-icon" /> Share, then{" "}
                                 <b>Add to Home Screen</b>.
                             </p>
                         )}
-                    </section>
+                    </Paper>
                 ) : null}
 
-                <button type="button" className="btn btn--danger-outline btn--block" onClick={logout}>
-                    <Icon name="logout" size={18} /> Log out
-                </button>
                 <p className="muted small center">Wizz v{__APP_VERSION__} · Marwiz Vision</p>
             </div>
         </div>

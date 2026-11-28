@@ -1,3 +1,4 @@
+import { Button } from "@mantine/core";
 import Icon from "../components/Icon";
 import OfflineBanner from "../components/OfflineBanner";
 import { useAuth } from "../context/AuthContext";
@@ -16,13 +17,13 @@ const ConnectionErrorPage = () => {
                 <h1 className="auth-card__title">Can't reach Wizz</h1>
                 <p className="auth-card__message">{friendlyMessage(error)}</p>
                 <div className="stack">
-                    <button type="button" className="btn btn--primary btn--block" onClick={() => retry()}>
+                    <Button unstyled type="button" className="btn btn--primary btn--block" onClick={() => retry()}>
                         <Icon name="refresh" size={18} /> Try again
-                    </button>
+                    </Button>
                     {user ? (
-                        <button type="button" className="btn btn--ghost btn--block" onClick={logout}>
+                        <Button unstyled type="button" className="btn btn--ghost btn--block" onClick={logout}>
                             Log out
-                        </button>
+                        </Button>
                     ) : null}
                 </div>
             </div>

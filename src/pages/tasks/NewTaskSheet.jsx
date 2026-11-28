@@ -1,3 +1,4 @@
+import { Button } from "@mantine/core";
 import { useEffect, useMemo, useState } from "react";
 import Sheet from "../../components/Sheet";
 import Icon from "../../components/Icon";
@@ -111,12 +112,12 @@ const NewTaskSheet = ({ open, access, onClose, onCreated }) => {
             busy={busy}
             footer={
                 <div className="row row--end">
-                    <button type="button" className="btn btn--ghost" onClick={onClose} disabled={busy}>
+                    <Button unstyled type="button" className="btn btn--ghost" onClick={onClose} disabled={busy}>
                         Cancel
-                    </button>
-                    <button type="submit" form="new-task-form" className="btn btn--primary" disabled={missing || busy}>
+                    </Button>
+                    <Button unstyled type="submit" form="new-task-form" className="btn btn--primary" disabled={missing || busy}>
                         {busy ? "Saving…" : form.target === "team" && form.teamMode === "per_member" ? "Create tasks" : "Create task"}
-                    </button>
+                    </Button>
                 </div>
             }
         >

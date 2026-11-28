@@ -1,3 +1,4 @@
+import { Button } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../Icon";
@@ -131,12 +132,12 @@ const TaskActionCard = ({ action: initial }) => {
 
             {pending ? (
                 <div className="row">
-                    <button type="button" className="btn btn--primary btn--sm" disabled={Boolean(busy)} onClick={() => act("confirm", () => confirmTaskAction(action.id))}>
+                    <Button unstyled type="button" className="btn btn--primary btn--sm" disabled={Boolean(busy)} onClick={() => act("confirm", () => confirmTaskAction(action.id))}>
                         <Icon name="check" size={16} /> {busy === "confirm" ? "Saving…" : "Confirm"}
-                    </button>
-                    <button type="button" className="btn btn--ghost btn--sm" disabled={Boolean(busy)} onClick={() => act("cancel", () => cancelTaskAction(action.id))}>
+                    </Button>
+                    <Button unstyled type="button" className="btn btn--ghost btn--sm" disabled={Boolean(busy)} onClick={() => act("cancel", () => cancelTaskAction(action.id))}>
                         Cancel
-                    </button>
+                    </Button>
                 </div>
             ) : null}
 

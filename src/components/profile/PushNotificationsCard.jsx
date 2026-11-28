@@ -1,3 +1,4 @@
+import { Paper } from "@mantine/core";
 import { useEffect, useState } from "react";
 import Icon from "../Icon";
 import { getPushConfig } from "../../api/notifications.api";
@@ -64,7 +65,7 @@ const PushNotificationsCard = () => {
     };
 
     return (
-        <section className="card">
+        <Paper component="section" className="card">
             <h3 className="card__title">Task notifications</h3>
             <div className="switch-row">
                 <span id="push-label">
@@ -97,7 +98,7 @@ const PushNotificationsCard = () => {
                 ) : null}
             </div>
             <p className="muted small">Your task inbox in Wizz always works, with or without this.</p>
-        </section>
+        </Paper>
     );
 };
 

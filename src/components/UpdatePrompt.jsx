@@ -1,3 +1,4 @@
+import { ActionIcon, Button } from "@mantine/core";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import Icon from "./Icon";
 
@@ -33,12 +34,12 @@ const UpdatePrompt = () => {
                 <span>A new version of Wizz is ready.</span>
             </div>
             <div className="toast__actions">
-                <button type="button" className="btn btn--primary btn--sm" onClick={() => updateServiceWorker(true)}>
+                <Button unstyled type="button" className="btn btn--primary btn--sm" onClick={() => updateServiceWorker(true)}>
                     Reload
-                </button>
-                <button type="button" className="icon-btn" onClick={() => setNeedRefresh(false)} aria-label="Later">
+                </Button>
+                <ActionIcon unstyled type="button" className="icon-btn" onClick={() => setNeedRefresh(false)} aria-label="Later">
                     <Icon name="close" size={18} />
-                </button>
+                </ActionIcon>
             </div>
         </div>
     );

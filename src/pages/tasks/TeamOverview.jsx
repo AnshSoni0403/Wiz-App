@@ -1,3 +1,4 @@
+import { Button, Paper } from "@mantine/core";
 import { useEffect, useState } from "react";
 import Icon from "../../components/Icon";
 import { getWorkload } from "../../api/tasks.api";
@@ -56,7 +57,7 @@ const TeamOverview = ({ summary, teamId, reloadKey, onOpenList, onOpenPerson }) 
                 })}
             </div>
 
-            <section className="card" aria-labelledby="workload-title" aria-busy={loading}>
+            <Paper component="section" className="card" aria-labelledby="workload-title" aria-busy={loading}>
                 <h3 className="card__title" id="workload-title">
                     Workload
                 </h3>
@@ -65,9 +66,9 @@ const TeamOverview = ({ summary, teamId, reloadKey, onOpenList, onOpenPerson }) 
                         <Icon name="alert" size={16} />
                         <div>
                             <p>{friendlyMessage(error)}</p>
-                            <button type="button" className="btn btn--secondary btn--sm" onClick={() => setRetry((n) => n + 1)}>
+                            <Button unstyled type="button" className="btn btn--secondary btn--sm" onClick={() => setRetry((n) => n + 1)}>
                                 Retry
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 ) : null}
@@ -97,7 +98,7 @@ const TeamOverview = ({ summary, teamId, reloadKey, onOpenList, onOpenPerson }) 
                         ))}
                     </ul>
                 ) : null}
-            </section>
+            </Paper>
         </div>
     );
 };

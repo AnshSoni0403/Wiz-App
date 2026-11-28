@@ -1,3 +1,4 @@
+import { ActionIcon } from "@mantine/core";
 import Icon from "./Icon";
 import { useNotifications } from "../context/NotificationsContext";
 
@@ -8,14 +9,14 @@ const NotificationBell = () => {
     const count = n.unread;
     const label = count ? `Notifications, ${count} unread` : "Notifications";
     return (
-        <button type="button" className="icon-btn bell-btn" onClick={n.openInbox} aria-label={label}>
+        <ActionIcon unstyled type="button" className="icon-btn bell-btn" onClick={n.openInbox} aria-label={label}>
             <Icon name="bell" size={22} />
             {count ? (
                 <span className="count-badge" aria-hidden="true">
                     {count > 99 ? "99+" : count}
                 </span>
             ) : null}
-        </button>
+        </ActionIcon>
     );
 };
 

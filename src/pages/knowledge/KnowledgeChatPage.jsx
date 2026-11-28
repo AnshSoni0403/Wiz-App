@@ -1,3 +1,4 @@
+import { ActionIcon, Button } from "@mantine/core";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TopBar from "../../components/TopBar";
@@ -327,20 +328,20 @@ const KnowledgeChatPage = () => {
                 title="Wizz"
                 subtitle="Knowledge"
                 leading={
-                    <button
+                    <ActionIcon unstyled
                         type="button"
                         className="icon-btn"
                         onClick={() => setHistoryOpen(true)}
                         aria-label="Conversation history"
                     >
                         <Icon name="history" size={22} />
-                    </button>
+                    </ActionIcon>
                 }
             >
                 <BranchPicker branches={branches} value={branch} onChange={setBranch} disabled={sending} />
-                <button type="button" className="icon-btn" onClick={newChat} aria-label="New chat">
+                <ActionIcon unstyled type="button" className="icon-btn" onClick={newChat} aria-label="New chat">
                     <Icon name="plus" size={22} />
-                </button>
+                </ActionIcon>
             </TopBar>
 
             <div className="chat-scroll" ref={scrollRef}>
@@ -354,17 +355,17 @@ const KnowledgeChatPage = () => {
                                 <p>{friendlyMessage(loadError)}</p>
                                 <div className="row">
                                     {isRetryable(loadError) ? (
-                                        <button
+                                        <Button unstyled
                                             type="button"
                                             className="btn btn--secondary btn--sm"
                                             onClick={() => loadConversation(routeId)}
                                         >
                                             Retry
-                                        </button>
+                                        </Button>
                                     ) : null}
-                                    <button type="button" className="btn btn--ghost btn--sm" onClick={newChat}>
+                                    <Button unstyled type="button" className="btn btn--ghost btn--sm" onClick={newChat}>
                                         New chat
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         </div>

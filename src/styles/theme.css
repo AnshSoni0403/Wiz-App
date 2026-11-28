@@ -37,9 +37,10 @@
     --font: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 
-    --topbar-h: 56px;
-    --nav-h: 60px;
+    --topbar-h: 50px;
+    --nav-h: 54px;
     --content-max: 860px;
+    --rail-width: 176px;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
 

@@ -129,10 +129,6 @@
     .spinner {
         animation-duration: 2.4s;
     }
-    .drawer__panel,
-    .drawer__backdrop {
-        transition: none;
-    }
 }
 
 /* Citations */
@@ -491,11 +487,77 @@ a.media-card:hover {
     color: var(--brand-hover);
 }
 
-@media (max-width: 360px) {
-    .topbar__titles {
-        display: none;
-    }
+@media (max-width: 380px) {
     .branch-picker select {
-        max-width: 120px;
+        max-width: 108px;
+    }
+
+    .page--chat .topbar {
+        gap: 4px;
+        padding-inline: 6px;
+    }
+}
+
+.chat-thread {
+    padding-top: 12px;
+    gap: 10px;
+}
+
+.chat-footer {
+    padding-block: 4px 8px;
+}
+
+.welcome {
+    padding-top: clamp(10px, 4vh, 36px);
+}
+
+.welcome__text {
+    margin-bottom: 12px;
+}
+
+.starter {
+    min-height: 44px;
+    padding: 8px 12px;
+}
+
+.composer {
+    align-items: flex-end;
+    gap: 4px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 3px;
+}
+
+.composer:focus-within {
+    border-color: var(--brand);
+}
+
+.composer__input,
+.composer__input:focus {
+    min-height: 42px;
+    padding: 9px 10px;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+}
+
+.composer__count {
+    position: static;
+    display: block;
+    padding: 0 8px 2px;
+    text-align: right;
+}
+
+.composer__send {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-sm);
+}
+
+@media (min-width: 900px) {
+    .starters {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }

@@ -1,3 +1,4 @@
+import { ActionIcon } from "@mantine/core";
 import { forwardRef, useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
 import Icon from "../Icon";
 import config from "../../config";
@@ -67,9 +68,9 @@ const Composer = forwardRef(({ onSend, disabled = false, busy = false, placehold
                     <span className={`composer__count ${remaining <= 0 ? "is-limit" : ""}`}>{remaining}</span>
                 ) : null}
             </div>
-            <button type="submit" className="composer__send" disabled={!canSend} aria-label="Send">
+            <ActionIcon unstyled type="submit" className="composer__send" disabled={!canSend} aria-label="Send">
                 <Icon name="send" size={20} />
-            </button>
+            </ActionIcon>
         </form>
     );
 });

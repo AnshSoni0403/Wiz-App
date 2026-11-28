@@ -12,17 +12,12 @@
     margin-bottom: 14px;
 }
 .proposal-hero { background: linear-gradient(145deg, var(--brand-soft), var(--surface) 72%); }
-.proposal-hero > svg { color: var(--brand-hover); margin-bottom: 6px; }
 .proposal-start { margin-top: 18px; }
 .proposal-back { display: inline-block; padding-block: 8px; margin-bottom: 4px; color: var(--brand-hover); }
 .proposal-heading { margin-bottom: 14px; }
-.proposal-tabs { display: flex; gap: 4px; padding: 4px; margin-bottom: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
-.proposal-tabs button { flex: 1; border: 0; background: transparent; min-width: 0; min-height: 44px; padding: 6px; border-radius: var(--radius-sm); color: var(--text); font: inherit; font-size: .86rem; cursor: pointer; }
-.proposal-tabs button[aria-pressed="true"] { color: var(--brand-hover); background: var(--brand-soft); font-weight: 650; }
-.proposal-tabs button:disabled, .proposal-choices button:disabled { opacity: .65; cursor: wait; }
 .proposal-question { margin: 0; padding: 0; border: 0; min-width: 0; }
 .proposal-question legend { font-size: 1.17rem; font-weight: 650; line-height: 1.4; margin-bottom: 14px; padding: 0; }
-.proposal-content label { display: block; font-weight: 600; margin-bottom: 6px; }
+.proposal-content form label { display: block; font-weight: 600; margin-bottom: 6px; }
 .proposal-content :is(input, select, textarea) {
     background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong);
     border-radius: var(--radius-sm); padding: 9px 12px; min-height: 44px; width: 100%; font: inherit; font-size: 16px;
@@ -61,4 +56,41 @@
 
 @media (max-width: 400px) {
     .proposal-start .proposal-actions > * { width: 100%; }
+}
+
+.proposal-content {
+    padding: 12px clamp(12px, 2.2vw, 24px);
+}
+
+.proposal-hero,
+.proposal-card {
+    padding: 12px 14px;
+}
+
+.proposal-start,
+.proposal-details,
+.proposal-document {
+    margin-top: 10px;
+}
+
+.proposal-heading,
+.proposal-tabs,
+.proposal-question legend {
+    margin-bottom: 8px;
+}
+
+.proposal-list-title {
+    margin-top: 14px !important;
+}
+
+.proposal-list a {
+    padding: 9px 12px;
+}
+
+.proposal-tabs label {
+    min-height: 36px;
+    display: grid;
+    place-items: center;
+    padding-inline: 4px;
+    line-height: 1.25;
 }

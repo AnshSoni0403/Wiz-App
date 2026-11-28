@@ -1,3 +1,4 @@
+import { Button, Paper } from "@mantine/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Icon from "../Icon";
 import { useAuth } from "../../context/AuthContext";
@@ -106,7 +107,7 @@ const TelegramLinkCard = () => {
     };
 
     return (
-        <section className="card">
+        <Paper component="section" className="card">
             <h3 className="card__title">Telegram</h3>
 
             {linked ? (
@@ -115,9 +116,9 @@ const TelegramLinkCard = () => {
                         <Icon name="check" size={18} className="text-success" />
                         Linked{username ? ` as @${username}` : ""}. You can ask Wizz from Telegram.
                     </p>
-                    <button type="button" className="btn btn--ghost" onClick={unlink} disabled={busy}>
+                    <Button unstyled type="button" className="btn btn--ghost" onClick={unlink} disabled={busy}>
                         Unlink Telegram
-                    </button>
+                    </Button>
                 </>
             ) : code && !expired ? (
                 <div className="telegram-code">
@@ -134,9 +135,9 @@ const TelegramLinkCard = () => {
                     </p>
                     <div className="telegram-code__box">
                         <code>link {code.code}</code>
-                        <button type="button" className="btn btn--secondary btn--sm" onClick={copy}>
+                        <Button unstyled type="button" className="btn btn--secondary btn--sm" onClick={copy}>
                             <Icon name={copied ? "check" : "copy"} size={16} /> {copied ? "Copied" : "Copy"}
-                        </button>
+                        </Button>
                     </div>
                     <p className="muted small">
                         Code expires in <strong>{countdown(msLeft)}</strong>. It works once.
@@ -152,9 +153,9 @@ const TelegramLinkCard = () => {
                                 <Icon name="send" size={16} /> Open Telegram
                             </a>
                         ) : null}
-                        <button type="button" className="btn btn--ghost btn--sm" onClick={checkNow} disabled={busy}>
+                        <Button unstyled type="button" className="btn btn--ghost btn--sm" onClick={checkNow} disabled={busy}>
                             I've sent it
-                        </button>
+                        </Button>
                     </div>
                 </div>
             ) : (
@@ -164,9 +165,9 @@ const TelegramLinkCard = () => {
                             ? "That code has expired. Get a new one to link your Telegram account."
                             : "Link your Telegram account to ask Wizz from Telegram as well."}
                     </p>
-                    <button type="button" className="btn btn--secondary" onClick={requestCode} disabled={busy}>
+                    <Button unstyled type="button" className="btn btn--secondary" onClick={requestCode} disabled={busy}>
                         <Icon name="send" size={18} /> {busy ? "Getting a code…" : expired ? "Get a new code" : "Link Telegram"}
-                    </button>
+                    </Button>
                 </>
             )}
 
@@ -175,7 +176,7 @@ const TelegramLinkCard = () => {
                     {error}
                 </div>
             ) : null}
-        </section>
+        </Paper>
     );
 };
 
