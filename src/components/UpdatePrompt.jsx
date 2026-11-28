@@ -1,4 +1,4 @@
-import { ActionIcon, Button } from "@mantine/core";
+import { ActionIcon, Button, Group, Paper, Text, ThemeIcon } from "@mantine/core";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import Icon from "./Icon";
 
@@ -25,23 +25,27 @@ const UpdatePrompt = () => {
     if (!needRefresh) return null;
 
     return (
-        <div className="toast" role="status">
-            <div className="toast__icon">
-                <Icon name="refresh" size={20} />
-            </div>
-            <div className="toast__body">
-                <strong>Update available</strong>
-                <span>A new version of Wizz is ready.</span>
-            </div>
-            <div className="toast__actions">
-                <Button unstyled type="button" className="btn btn--primary btn--sm" onClick={() => updateServiceWorker(true)}>
+        <Paper className="prompt-card" withBorder shadow="md" p="sm" radius="lg" role="status">
+            <Group gap="sm" wrap="nowrap" align="center">
+                <ThemeIcon size={36} radius="md" variant="light" color="gold">
+                    <Icon name="refresh" size={18} />
+                </ThemeIcon>
+                <div className="prompt-card__text">
+                    <Text size="sm" fw={600}>
+                        Update available
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                        A new version of Wizz is ready.
+                    </Text>
+                </div>
+                <Button size="xs" onClick={() => updateServiceWorker(true)}>
                     Reload
                 </Button>
-                <ActionIcon unstyled type="button" className="icon-btn" onClick={() => setNeedRefresh(false)} aria-label="Later">
-                    <Icon name="close" size={18} />
+                <ActionIcon size="md" onClick={() => setNeedRefresh(false)} aria-label="Later">
+                    <Icon name="close" size={16} />
                 </ActionIcon>
-            </div>
-        </div>
+            </Group>
+        </Paper>
     );
 };
 

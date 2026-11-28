@@ -1,9 +1,10 @@
-import { Button } from "@mantine/core";
+import { Alert, Avatar, Button, Checkbox, Group, Loader, Radio, ScrollArea, SegmentedControl, SimpleGrid, Stack, Text, TextInput, Textarea, UnstyledButton } from "@mantine/core";
 import { useEffect, useMemo, useState } from "react";
 import Sheet from "../../components/Sheet";
 import Icon from "../../components/Icon";
 import { createTask, getDirectory } from "../../api/tasks.api";
 import { friendlyMessage, toApiError } from "../../utils/errors";
+import { initials } from "../../utils/format";
 import { PRIORITY_LABELS, newIdempotencyKey, todayInput } from "../../utils/tasks";
 
 const blank = () => ({
@@ -17,6 +18,17 @@ const blank = () => ({
     dueTime: "",
     priority: "medium",
 });
+
+const addDays = (n) => {
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const nextFriday = () => {
+    const d = new Date();
+    const delta = (5 - d.getDay() + 7) % 7 || 7;
+    return addDays(delta);
+};
 
 /**
  * Quick task creation. People who may assign pick one or more people, or a team with an explicit
@@ -33,6 +45,7 @@ const NewTaskSheet = ({ open, access, onClose, onCreated }) => {
     const [search, setSearch] = useState("");
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(null);
+    const [more, setMore] = useState(false);
 
     useEffect(() => {
         if (!open) return;
@@ -40,6 +53,7 @@ const NewTaskSheet = ({ open, access, onClose, onCreated }) => {
         setKey(newIdempotencyKey());
         setError(null);
         setSearch("");
+        setMore(false);
     }, [open, canAssign]);
 
     useEffect(() => {
@@ -63,14 +77,10 @@ const NewTaskSheet = ({ open, access, onClose, onCreated }) => {
     }, [open, canAssign, search]);
 
     const set = (patch) => setForm((f) => ({ ...f, ...patch }));
-    const togglePerson = (id) =>
-        set({ assigneeIds: form.assigneeIds.includes(id) ? form.assigneeIds.filter((x) => x !== id) : [...form.assigneeIds, id] });
+    const togglePerson = (id) => set({ assigneeIds: form.assigneeIds.includes(id) ? form.assigneeIds.filter((x) => x !== id) : [...form.assigneeIds, id] });
     const selectedTeam = useMemo(() => directory.teams.find((t) => t._id === form.teamId) || null, [directory.teams, form.teamId]);
 
-    const missing =
-        !form.title.trim() ||
-        (form.target === "person" && !form.assigneeIds.length) ||
-        (form.target === "team" && !form.teamId);
+    const missing = !form.title.trim() || (form.target === "person" && !form.assigneeIds.length) || (form.target === "team" && !form.teamId);
 
     const submit = async (e) => {
         e.preventDefault();
@@ -104,168 +114,210 @@ const NewTaskSheet = ({ open, access, onClose, onCreated }) => {
         }
     };
 
+    const quickDues = [
+        { label: "Today", value: todayInput() },
+        { label: "Tomorrow", value: addDays(1) },
+        { label: "Friday", value: nextFriday() },
+        { label: "Next week", value: addDays(7) },
+    ];
+    const submitLabel = form.target === "team" && form.teamMode === "per_member" ? `Create ${selectedTeam?.memberCount || ""} tasks`.replace("  ", " ") : "Create task";
+
     return (
         <Sheet
             open={open}
             title="New task"
             onClose={onClose}
             busy={busy}
+            size="lg"
             footer={
-                <div className="row row--end">
-                    <Button unstyled type="button" className="btn btn--ghost" onClick={onClose} disabled={busy}>
-                        Cancel
-                    </Button>
-                    <Button unstyled type="submit" form="new-task-form" className="btn btn--primary" disabled={missing || busy}>
-                        {busy ? "Saving…" : form.target === "team" && form.teamMode === "per_member" ? "Create tasks" : "Create task"}
-                    </Button>
-                </div>
+                <Button type="submit" form="new-task-form" fullWidth size="md" loading={busy} disabled={missing} leftSection={<Icon name="check" size={18} />}>
+                    {submitLabel}
+                </Button>
             }
         >
-            <form id="new-task-form" className="form" onSubmit={submit}>
-                {error ? (
-                    <div className="notice notice--danger" role="alert">
-                        <Icon name="alert" size={16} />
-                        <p>{friendlyMessage(error)}</p>
-                    </div>
-                ) : null}
-                <label className="field">
-                    <span className="field__label">What needs doing?</span>
-                    <input
-                        className="input"
+            <form id="new-task-form" onSubmit={submit}>
+                <Stack gap="md">
+                    {error ? (
+                        <Alert color="red" icon={<Icon name="alert" size={16} />}>
+                            {friendlyMessage(error)}
+                        </Alert>
+                    ) : null}
+
+                    <TextInput
+                        label="What needs doing?"
                         data-autofocus
                         required
                         maxLength={200}
                         value={form.title}
                         onChange={(e) => set({ title: e.target.value })}
                         placeholder="e.g. Prepare the UK brochure"
+                        size="md"
                     />
-                </label>
-                <label className="field">
-                    <span className="field__label">Details (optional)</span>
-                    <textarea
-                        className="input"
-                        rows={2}
-                        maxLength={5000}
-                        value={form.description}
-                        onChange={(e) => set({ description: e.target.value })}
-                    />
-                </label>
 
-                {canAssign ? (
-                    <fieldset className="field fieldset">
-                        <legend className="field__label">Assign to</legend>
-                        <div className="segmented segmented--sm" role="group" aria-label="Assign to">
-                            <button type="button" aria-pressed={form.target === "person"} onClick={() => set({ target: "person" })}>
-                                People
-                            </button>
-                            <button type="button" aria-pressed={form.target === "team"} onClick={() => set({ target: "team" })}>
-                                A team
-                            </button>
-                            {selfId ? (
-                                <button type="button" aria-pressed={form.target === "self"} onClick={() => set({ target: "self" })}>
-                                    Me
-                                </button>
-                            ) : null}
-                        </div>
-                        {form.target !== "self" ? (
-                            <label className="search-field search-field--compact">
-                                <Icon name="search" size={16} />
-                                <span className="sr-only">{form.target === "team" ? "Search teams" : "Search people"}</span>
-                                <input
-                                    type="search"
-                                    className="input"
+                    {canAssign ? (
+                        <Stack gap={8}>
+                            <Text size="sm" fw={500}>
+                                Assign to
+                            </Text>
+                            <SegmentedControl
+                                aria-label="Assign to"
+                                value={form.target}
+                                onChange={(target) => set({ target })}
+                                data={[
+                                    { value: "person", label: "People" },
+                                    { value: "team", label: "Team" },
+                                    ...(selfId ? [{ value: "self", label: "Me" }] : []),
+                                ]}
+                            />
+                            {form.target !== "self" ? (
+                                <TextInput
+                                    aria-label={form.target === "team" ? "Search teams" : "Search people"}
+                                    placeholder={form.target === "team" ? "Search teams" : "Search people"}
+                                    leftSection={<Icon name="search" size={15} />}
+                                    rightSection={dirLoading ? <Loader size={14} /> : null}
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    placeholder={form.target === "team" ? "Search teams" : "Search people"}
+                                    size="xs"
                                 />
-                            </label>
-                        ) : null}
-                        {form.target === "person" ? (
-                            <div className="pick-list" role="group" aria-label="People" aria-busy={dirLoading}>
-                                {directory.people.map((p) => (
-                                    <label key={p._id} className={`pick ${form.assigneeIds.includes(p._id) ? "is-picked" : ""}`}>
-                                        <input type="checkbox" checked={form.assigneeIds.includes(p._id)} onChange={() => togglePerson(p._id)} />
-                                        <span className="pick__text">
-                                            <span>{p.name}</span>
-                                            <span className="muted small">{[p.branch, ...(p.teams || [])].filter(Boolean).join(" · ")}</span>
-                                        </span>
-                                    </label>
-                                ))}
-                                {!dirLoading && !directory.people.length ? <p className="muted small">No one matches.</p> : null}
-                            </div>
-                        ) : null}
-                        {form.target === "team" ? (
-                            <>
-                                <div className="pick-list" role="radiogroup" aria-label="Team" aria-busy={dirLoading}>
-                                    {directory.teams.map((t) => (
-                                        <label key={t._id} className={`pick ${form.teamId === t._id ? "is-picked" : ""}`}>
-                                            <input type="radio" name="team" checked={form.teamId === t._id} onChange={() => set({ teamId: t._id })} />
-                                            <span className="pick__text">
-                                                <span>
-                                                    {t.name}
-                                                    {t.branch ? ` (${t.branch})` : ""}
-                                                </span>
-                                                <span className="muted small">
-                                                    {t.memberCount || 0} member{t.memberCount === 1 ? "" : "s"}
-                                                    {t.leads?.length ? ` · lead ${t.leads.map((l) => l.name).join(", ")}` : ""}
-                                                </span>
-                                            </span>
-                                        </label>
-                                    ))}
-                                    {!dirLoading && !directory.teams.length ? <p className="muted small">No teams you can assign to.</p> : null}
-                                </div>
-                                {form.teamId ? (
-                                    <div className="choice-cards" role="radiogroup" aria-label="How to assign the team">
-                                        <label className={`choice-card ${form.teamMode === "shared" ? "is-picked" : ""}`}>
-                                            <input type="radio" name="teamMode" checked={form.teamMode === "shared"} onChange={() => set({ teamMode: "shared" })} />
-                                            <span>
-                                                <strong>One shared task</strong>
-                                                <span className="muted small">The whole team works on one task together.</span>
-                                            </span>
-                                        </label>
-                                        <label className={`choice-card ${form.teamMode === "per_member" ? "is-picked" : ""}`}>
-                                            <input
-                                                type="radio"
-                                                name="teamMode"
-                                                checked={form.teamMode === "per_member"}
-                                                onChange={() => set({ teamMode: "per_member" })}
-                                            />
-                                            <span>
-                                                <strong>One task per member</strong>
-                                                <span className="muted small">
-                                                    {selectedTeam?.memberCount ? `${selectedTeam.memberCount} separate tasks, ` : ""}each person reports on their own.
-                                                </span>
-                                            </span>
-                                        </label>
-                                    </div>
-                                ) : null}
-                            </>
-                        ) : null}
-                    </fieldset>
-                ) : (
-                    <p className="muted small">This task will be assigned to you.</p>
-                )}
+                            ) : null}
+                            {form.target === "person" ? (
+                                <ScrollArea.Autosize mah={220} type="auto">
+                                    <Stack gap={4} role="group" aria-label="People" aria-busy={dirLoading}>
+                                        {directory.people.map((p) => {
+                                            const picked = form.assigneeIds.includes(p._id);
+                                            return (
+                                                <Checkbox.Card key={p._id} className="tk-pick" radius="md" checked={picked} onClick={() => togglePerson(p._id)} aria-label={p.name}>
+                                                    <Group wrap="nowrap" gap="sm">
+                                                    <Checkbox.Indicator size="xs" />
+                                                    <Avatar size={28} radius="xl" color="gold" variant="light">
+                                                        {initials(p.name)}
+                                                    </Avatar>
+                                                    <div className="tk-pick__text">
+                                                        <Text size="sm" fw={500} truncate>
+                                                            {p.name}
+                                                        </Text>
+                                                        <Text size="xs" c="dimmed" truncate>
+                                                            {[p.branch, ...(p.teams || [])].filter(Boolean).join(" · ")}
+                                                        </Text>
+                                                    </div>
+                                                    </Group>
+                                                </Checkbox.Card>
+                                            );
+                                        })}
+                                        {!dirLoading && !directory.people.length ? (
+                                            <Text size="xs" c="dimmed">
+                                                No one matches.
+                                            </Text>
+                                        ) : null}
+                                    </Stack>
+                                </ScrollArea.Autosize>
+                            ) : null}
+                            {form.target === "team" ? (
+                                <>
+                                    <ScrollArea.Autosize mah={200} type="auto">
+                                        <Radio.Group value={form.teamId} onChange={(teamId) => set({ teamId })} aria-label="Team">
+                                            <Stack gap={4} aria-busy={dirLoading}>
+                                                {directory.teams.map((t) => (
+                                                    <Radio.Card key={t._id} value={t._id} className="tk-pick" radius="md" aria-label={t.name}>
+                                                        <Group wrap="nowrap" gap="sm">
+                                                        <Radio.Indicator size="xs" />
+                                                        <div className="tk-pick__text">
+                                                            <Text size="sm" fw={500} truncate>
+                                                                {t.name}
+                                                                {t.branch ? ` · ${t.branch}` : ""}
+                                                            </Text>
+                                                            <Text size="xs" c="dimmed" truncate>
+                                                                {t.memberCount || 0} member{t.memberCount === 1 ? "" : "s"}
+                                                                {t.leads?.length ? ` · lead ${t.leads.map((l) => l.name).join(", ")}` : ""}
+                                                            </Text>
+                                                        </div>
+                                                        </Group>
+                                                    </Radio.Card>
+                                                ))}
+                                                {!dirLoading && !directory.teams.length ? (
+                                                    <Text size="xs" c="dimmed">
+                                                        No teams you can assign to.
+                                                    </Text>
+                                                ) : null}
+                                            </Stack>
+                                        </Radio.Group>
+                                    </ScrollArea.Autosize>
+                                    {form.teamId ? (
+                                        <SimpleGrid cols={2} spacing="xs" role="radiogroup" aria-label="How to assign the team">
+                                            {[
+                                                { value: "shared", title: "One shared task", body: "The team works on it together." },
+                                                {
+                                                    value: "per_member",
+                                                    title: "One per member",
+                                                    body: `${selectedTeam?.memberCount ? `${selectedTeam.memberCount} tasks, ` : ""}each reports alone.`,
+                                                },
+                                            ].map((o) => (
+                                                <UnstyledButton
+                                                    key={o.value}
+                                                    role="radio"
+                                                    aria-checked={form.teamMode === o.value}
+                                                    className={`tk-choice ${form.teamMode === o.value ? "tk-choice--on" : ""}`}
+                                                    onClick={() => set({ teamMode: o.value })}
+                                                >
+                                                    <Text size="sm" fw={600}>
+                                                        {o.title}
+                                                    </Text>
+                                                    <Text size="xs" c="dimmed">
+                                                        {o.body}
+                                                    </Text>
+                                                </UnstyledButton>
+                                            ))}
+                                        </SimpleGrid>
+                                    ) : null}
+                                </>
+                            ) : null}
+                        </Stack>
+                    ) : (
+                        <Group gap={6}>
+                            <Icon name="user" size={15} />
+                            <Text size="sm" c="dimmed">
+                                This task will be assigned to you.
+                            </Text>
+                        </Group>
+                    )}
 
-                <div className="field-row">
-                    <label className="field">
-                        <span className="field__label">Due date</span>
-                        <input type="date" className="input" min={todayInput()} value={form.due} onChange={(e) => set({ due: e.target.value })} />
-                    </label>
-                    <label className="field">
-                        <span className="field__label">Time (optional)</span>
-                        <input type="time" className="input" value={form.dueTime} disabled={!form.due} onChange={(e) => set({ dueTime: e.target.value })} />
-                    </label>
-                </div>
-                <label className="field">
-                    <span className="field__label">Priority</span>
-                    <select className="input" value={form.priority} onChange={(e) => set({ priority: e.target.value })}>
-                        {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
-                            <option key={value} value={value}>
-                                {label}
-                            </option>
-                        ))}
-                    </select>
-                </label>
+                    <Stack gap={6}>
+                        <Text size="sm" fw={500}>
+                            Due
+                        </Text>
+                        <Group gap={6}>
+                            {quickDues.map((d) => (
+                                <UnstyledButton key={d.label} className={`tk-chip ${form.due === d.value ? "tk-chip--active" : ""}`} onClick={() => set({ due: form.due === d.value ? "" : d.value })} aria-pressed={form.due === d.value}>
+                                    {d.label}
+                                </UnstyledButton>
+                            ))}
+                        </Group>
+                        <SimpleGrid cols={2} spacing="xs">
+                            <TextInput type="date" aria-label="Due date" min={todayInput()} value={form.due} onChange={(e) => set({ due: e.target.value })} leftSection={<Icon name="due" size={15} />} />
+                            <TextInput type="time" aria-label="Due time (optional)" value={form.dueTime} disabled={!form.due} onChange={(e) => set({ dueTime: e.target.value })} leftSection={<Icon name="clock" size={15} />} />
+                        </SimpleGrid>
+                    </Stack>
+
+                    <Stack gap={6}>
+                        <Text size="sm" fw={500}>
+                            Priority
+                        </Text>
+                        <SegmentedControl
+                            aria-label="Priority"
+                            value={form.priority}
+                            onChange={(priority) => set({ priority })}
+                            data={Object.entries(PRIORITY_LABELS).map(([value, label]) => ({ value, label }))}
+                        />
+                    </Stack>
+
+                    {more ? (
+                        <Textarea label="Details" minRows={2} maxLength={5000} value={form.description} onChange={(e) => set({ description: e.target.value })} placeholder="Anything the assignee should know" />
+                    ) : (
+                        <Button variant="subtle" size="xs" leftSection={<Icon name="plus" size={14} />} onClick={() => setMore(true)} style={{ alignSelf: "flex-start" }}>
+                            Add details
+                        </Button>
+                    )}
+                </Stack>
             </form>
         </Sheet>
     );

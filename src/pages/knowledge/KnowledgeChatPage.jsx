@@ -1,8 +1,8 @@
-import { ActionIcon, Button } from "@mantine/core";
+import { ActionIcon, Alert, Button, Group, Skeleton, Stack, Tooltip } from "@mantine/core";
+import { IconAlertTriangle, IconArrowDown, IconHistory, IconInfoCircle, IconMessagePlus } from "@tabler/icons-react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TopBar from "../../components/TopBar";
-import Icon from "../../components/Icon";
 import BranchPicker from "../../components/knowledge/BranchPicker";
 import Composer from "../../components/knowledge/Composer";
 import HistoryDrawer from "../../components/knowledge/HistoryDrawer";
@@ -67,6 +67,10 @@ const KnowledgeChatPage = () => {
     const answerAbortRef = useRef(null);
     const scrollRef = useRef(null);
     const composerRef = useRef(null);
+    // Follow new messages only while the reader is at (or near) the bottom of the thread.
+    const stickRef = useRef(true);
+    const [showJump, setShowJump] = useState(false);
+    const [title, setTitle] = useState("");
 
     useEffect(() => {
         setAiOff(wizz?.aiConfigured === false);
@@ -101,6 +105,8 @@ const KnowledgeChatPage = () => {
         try {
             const conv = await getConversation(id, { signal });
             loadedIdRef.current = id;
+            stickRef.current = true;
+            setTitle(conv?.title || "");
             setMessages((conv?.messages || []).map(fromServerMessage));
         } catch (err) {
             if (toApiError(err).kind !== "cancelled") setLoadError(err);
@@ -115,6 +121,7 @@ const KnowledgeChatPage = () => {
         cancelInFlight();
         if (!id) {
             loadedIdRef.current = null;
+            setTitle("");
             setMessages([]);
             setLoadError(null);
             setLoadingConversation(false);
@@ -204,11 +211,29 @@ const KnowledgeChatPage = () => {
         [fetchResearchAnswers]
     );
 
-    // Keep the newest message in view.
+    // Keep the newest message in view while the reader is at the bottom; otherwise offer "jump to latest".
     useLayoutEffect(() => {
         const el = scrollRef.current;
-        if (el) el.scrollTop = el.scrollHeight;
+        if (!el) return;
+        if (stickRef.current) el.scrollTop = el.scrollHeight;
+        else setShowJump(true);
     }, [messages, sending]);
+
+    const onScroll = useCallback(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+        stickRef.current = atBottom;
+        if (atBottom) setShowJump(false);
+    }, []);
+
+    const jumpToLatest = useCallback(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        stickRef.current = true;
+        setShowJump(false);
+        el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    }, []);
 
     const runChat = useCallback(
         async (userMessage) => {
@@ -259,6 +284,8 @@ const KnowledgeChatPage = () => {
     const send = useCallback(
         (text) => {
             if (sending || loadingConversation) return;
+            stickRef.current = true;
+            if (!loadedIdRef.current) setTitle((t) => t || text.replace(/\s+/g, " ").slice(0, 80));
             const userMessage = { id: localId(), role: "user", text, at: new Date().toISOString(), status: "sending" };
             setMessages((list) => [...list, userMessage]);
             runChat(userMessage);
@@ -279,6 +306,7 @@ const KnowledgeChatPage = () => {
         setHistoryOpen(false);
         cancelInFlight();
         loadedIdRef.current = null;
+        setTitle("");
         setMessages([]);
         setLoadError(null);
         navigate(BASE_PATH);
@@ -298,6 +326,7 @@ const KnowledgeChatPage = () => {
             if (id === loadedIdRef.current) {
                 cancelInFlight();
                 loadedIdRef.current = null;
+                setTitle("");
                 setMessages([]);
                 navigate(BASE_PATH, { replace: true });
             }
@@ -322,53 +351,56 @@ const KnowledgeChatPage = () => {
         );
     };
 
+    const branchLabel = branches.find((b) => b.code === branch)?.name;
+    const subtitle = title || (branchLabel ? `Answers for ${branchLabel}` : "Products, research and tasks");
+
     return (
         <div className="page page--chat">
-            <TopBar
-                title="Wizz"
-                subtitle="Knowledge"
-                leading={
-                    <ActionIcon unstyled
-                        type="button"
-                        className="icon-btn"
-                        onClick={() => setHistoryOpen(true)}
-                        aria-label="Conversation history"
-                    >
-                        <Icon name="history" size={22} />
-                    </ActionIcon>
-                }
-            >
+            <TopBar title="Ask Wizz" subtitle={subtitle}>
                 <BranchPicker branches={branches} value={branch} onChange={setBranch} disabled={sending} />
-                <ActionIcon unstyled type="button" className="icon-btn" onClick={newChat} aria-label="New chat">
-                    <Icon name="plus" size={22} />
-                </ActionIcon>
+                <Tooltip label="Chats">
+                    <ActionIcon onClick={() => setHistoryOpen(true)} aria-label="Conversation history" color="dark">
+                        <IconHistory size={20} stroke={1.75} />
+                    </ActionIcon>
+                </Tooltip>
+                <Tooltip label="New chat">
+                    <ActionIcon onClick={newChat} aria-label="New chat" color="dark">
+                        <IconMessagePlus size={20} stroke={1.75} />
+                    </ActionIcon>
+                </Tooltip>
             </TopBar>
 
-            <div className="chat-scroll" ref={scrollRef}>
+            <div className="chat-scroll" ref={scrollRef} onScroll={onScroll}>
                 <div className="chat-thread">
-                    {loadingConversation ? <div className="spinner spinner--center" aria-label="Loading conversation" /> : null}
+                    {loadingConversation ? (
+                        <Stack gap="md" aria-label="Loading conversation" aria-busy="true">
+                            <Skeleton height={38} width="62%" ml="auto" radius="lg" />
+                            <Group align="flex-start" gap="xs" wrap="nowrap">
+                                <Skeleton circle height={26} />
+                                <Stack gap={6} style={{ flex: 1 }}>
+                                    <Skeleton height={12} />
+                                    <Skeleton height={12} width="90%" />
+                                    <Skeleton height={12} width="70%" />
+                                </Stack>
+                            </Group>
+                            <Skeleton height={38} width="45%" ml="auto" radius="lg" />
+                        </Stack>
+                    ) : null}
 
                     {loadError ? (
-                        <div className="notice notice--danger">
-                            <Icon name="alert" size={18} />
-                            <div>
-                                <p>{friendlyMessage(loadError)}</p>
-                                <div className="row">
-                                    {isRetryable(loadError) ? (
-                                        <Button unstyled
-                                            type="button"
-                                            className="btn btn--secondary btn--sm"
-                                            onClick={() => loadConversation(routeId)}
-                                        >
-                                            Retry
-                                        </Button>
-                                    ) : null}
-                                    <Button unstyled type="button" className="btn btn--ghost btn--sm" onClick={newChat}>
-                                        New chat
+                        <Alert color="red" icon={<IconAlertTriangle size={18} />} title="Couldn't open this chat">
+                            {friendlyMessage(loadError)}
+                            <Group gap="xs" mt="xs">
+                                {isRetryable(loadError) ? (
+                                    <Button size="compact-sm" variant="light" color="red" onClick={() => loadConversation(routeId)}>
+                                        Retry
                                     </Button>
-                                </div>
-                            </div>
-                        </div>
+                                ) : null}
+                                <Button size="compact-sm" variant="subtle" color="gray" onClick={newChat}>
+                                    New chat
+                                </Button>
+                            </Group>
+                        </Alert>
                     ) : null}
 
                     {empty ? (
@@ -396,11 +428,22 @@ const KnowledgeChatPage = () => {
             </div>
 
             <div className="chat-footer">
+                {showJump ? (
+                    <ActionIcon
+                        className="chat-jump"
+                        variant="default"
+                        radius="xl"
+                        size={36}
+                        onClick={jumpToLatest}
+                        aria-label="Jump to latest message"
+                    >
+                        <IconArrowDown size={18} />
+                    </ActionIcon>
+                ) : null}
                 {aiOff ? (
-                    <div className="notice notice--warning small">
-                        <Icon name="info" size={16} />
-                        <span>{AI_NOT_CONFIGURED_MESSAGE}</span>
-                    </div>
+                    <Alert color="yellow" p="xs" mb={6} icon={<IconInfoCircle size={16} />}>
+                        {AI_NOT_CONFIGURED_MESSAGE}
+                    </Alert>
                 ) : null}
                 <Composer ref={composerRef} onSend={send} busy={sending} disabled={loadingConversation} />
             </div>

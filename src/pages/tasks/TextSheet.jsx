@@ -1,4 +1,4 @@
-import { Button } from "@mantine/core";
+import { Alert, Button, Group, Stack, Text, TextInput, Textarea } from "@mantine/core";
 import { useEffect, useId, useState } from "react";
 import Sheet from "../../components/Sheet";
 import Icon from "../../components/Icon";
@@ -20,6 +20,7 @@ const TextSheet = ({
     maxLength = 1000,
     initial = "",
     extra = null,
+    placeholder = "",
     onClose,
     onSubmit,
 }) => {
@@ -49,56 +50,51 @@ const TextSheet = ({
         }
     };
 
+    const Field = multiline ? Textarea : TextInput;
+
     return (
         <Sheet
             open={open}
             title={title}
             onClose={onClose}
             busy={busy}
+            size="md"
             footer={
-                <div className="row row--end">
-                    <Button unstyled type="button" className="btn btn--ghost" onClick={onClose} disabled={busy}>
+                <Group grow>
+                    <Button variant="default" onClick={onClose} disabled={busy}>
                         Cancel
                     </Button>
-                    <Button unstyled type="submit" form={fieldId} className="btn btn--primary" disabled={busy || (required && !text.trim())}>
-                        {busy ? "Saving…" : submitLabel}
+                    <Button type="submit" form={fieldId} loading={busy} disabled={required && !text.trim()}>
+                        {submitLabel}
                     </Button>
-                </div>
+                </Group>
             }
         >
-            <form id={fieldId} className="form" onSubmit={submit}>
-                {error ? (
-                    <div className="notice notice--danger" role="alert">
-                        <Icon name="alert" size={16} />
-                        <p>{friendlyMessage(error)}</p>
-                    </div>
-                ) : null}
-                <label className="field">
-                    <span className="field__label">{label}</span>
-                    {multiline ? (
-                        <textarea
-                            className="input"
-                            rows={3}
-                            data-autofocus
-                            maxLength={maxLength}
-                            value={text}
-                            required={required}
-                            onChange={(e) => setText(e.target.value)}
-                        />
-                    ) : (
-                        <input
-                            className="input"
-                            type={type}
-                            data-autofocus
-                            maxLength={maxLength}
-                            value={text}
-                            required={required}
-                            onChange={(e) => setText(e.target.value)}
-                        />
-                    )}
-                </label>
-                {hint ? <p className="muted small">{hint}</p> : null}
-                {extra}
+            <form id={fieldId} onSubmit={submit}>
+                <Stack gap="sm">
+                    {error ? (
+                        <Alert color="red" icon={<Icon name="alert" size={16} />}>
+                            {friendlyMessage(error)}
+                        </Alert>
+                    ) : null}
+                    <Field
+                        label={label}
+                        data-autofocus
+                        type={multiline ? undefined : type}
+                        minRows={multiline ? 3 : undefined}
+                        maxLength={maxLength}
+                        value={text}
+                        required={required}
+                        placeholder={placeholder}
+                        onChange={(e) => setText(e.target.value)}
+                    />
+                    {hint ? (
+                        <Text size="xs" c="dimmed">
+                            {hint}
+                        </Text>
+                    ) : null}
+                    {extra}
+                </Stack>
             </form>
         </Sheet>
     );

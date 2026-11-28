@@ -1,5 +1,5 @@
-import { Button } from "@mantine/core";
-import Icon from "../Icon";
+import { SimpleGrid, Text, ThemeIcon, Title, UnstyledButton } from "@mantine/core";
+import { IconChecklist, IconDeviceCctv, IconPlayerPlay, IconServer2, IconSparkles, IconWorldSearch } from "@tabler/icons-react";
 import markUrl from "../../assets/images/marwiz-mark.png";
 
 export const STARTER_QUESTIONS = [
@@ -17,31 +17,47 @@ export const TASK_EXAMPLES = {
     staff: ["What's due for me this week?", "Do I have any update requests?"],
 };
 
-/** Empty-chat welcome with suggested questions. `tasks` is the member's task role, or null. */
+const ICON_FOR = {
+    [STARTER_QUESTIONS[0]]: IconServer2,
+    [STARTER_QUESTIONS[1]]: IconPlayerPlay,
+    [STARTER_QUESTIONS[2]]: IconDeviceCctv,
+    [RESEARCH_EXAMPLE]: IconWorldSearch,
+};
+
+/** Empty-chat welcome with suggested questions as cards. `tasks` is the member's task role, or null. */
 const StarterQuestions = ({ name, onPick, disabled = false, research = false, tasks = null }) => {
     const taskQuestions = tasks ? TASK_EXAMPLES[tasks === "staff" ? "staff" : "manager"] : [];
     const questions = [...taskQuestions, ...STARTER_QUESTIONS.slice(0, tasks ? 2 : 3), ...(research ? [RESEARCH_EXAMPLE] : [])];
+    const abilities = [
+        "products, detections, hardware, pricing and demos",
+        research ? "web research" : null,
+        tasks ? (tasks === "staff" ? "your tasks and updates" : "assigning and tracking your team's work") : null,
+    ].filter(Boolean);
     return (
         <div className="welcome">
-            <img src={markUrl} alt="" className="welcome__mark" width="56" height="56" />
-            <h2 className="welcome__title">{name ? `Hi ${name}, I'm Wizz` : "Hi, I'm Wizz"}</h2>
-            <p className="welcome__text">
-                Ask me about Marwiz Vision products, detections, hardware, deployments, pricing and demo material.
-                {research ? " If it needs looking up on the web, I'll do that too." : ""}
-                {tasks
-                    ? tasks === "staff"
-                        ? " I can also show your tasks and post your updates."
-                        : " I can also assign work, chase updates and summarise what your team has done."
-                    : ""}
-            </p>
-            <div className="starters">
-                {questions.map((q) => (
-                    <Button unstyled key={q} type="button" className="starter" onClick={() => onPick(q)} disabled={disabled}>
-                        <Icon name={taskQuestions.includes(q) ? "tasks" : "sparkle"} size={16} />
-                        <span>{q}</span>
-                    </Button>
-                ))}
-            </div>
+            <img src={markUrl} alt="" className="welcome__mark" width="48" height="48" />
+            <Title order={2} className="welcome__title">
+                {name ? `Hi ${name}, how can I help?` : "How can I help?"}
+            </Title>
+            <Text size="sm" c="dimmed" ta="center" maw={420}>
+                Ask me about {abilities.join(", ").replace(/, ([^,]*)$/, " and $1")}.
+            </Text>
+            <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="xs" className="starters">
+                {questions.map((q) => {
+                    const isTask = taskQuestions.includes(q);
+                    const QIcon = isTask ? IconChecklist : ICON_FOR[q] || IconSparkles;
+                    return (
+                        <UnstyledButton key={q} className="starter" onClick={() => onPick(q)} disabled={disabled}>
+                            <ThemeIcon variant="light" color={isTask ? "teal" : "gold"} radius="md" size={30}>
+                                <QIcon size={17} stroke={1.75} />
+                            </ThemeIcon>
+                            <Text size="sm" lh={1.35} className="starter__text">
+                                {q}
+                            </Text>
+                        </UnstyledButton>
+                    );
+                })}
+            </SimpleGrid>
         </div>
     );
 };

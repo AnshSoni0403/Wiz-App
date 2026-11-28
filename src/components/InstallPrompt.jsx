@@ -1,4 +1,4 @@
-import { ActionIcon, Button } from "@mantine/core";
+import { ActionIcon, Button, Group, Paper, Text, ThemeIcon } from "@mantine/core";
 import { useState } from "react";
 import Icon from "./Icon";
 import { useInstallPrompt } from "../pwa/installPrompt";
@@ -24,25 +24,28 @@ const InstallPrompt = () => {
     };
 
     return (
-        <div className="toast" role="dialog" aria-label="Install Wizz">
-            <div className="toast__icon">
-                <Icon name={canInstall ? "download" : "share"} size={20} />
-            </div>
-            <div className="toast__body">
-                <strong>Install Wizz</strong>
+        <Paper className="prompt-card" withBorder shadow="md" p="sm" radius="lg" role="dialog" aria-label="Install Wizz">
+            <Group gap="sm" wrap="nowrap" align="center">
+                <ThemeIcon size={36} radius="md" variant="light" color="gold">
+                    <Icon name={canInstall ? "download" : "share"} size={18} />
+                </ThemeIcon>
+                <div className="prompt-card__text">
+                    <Text size="sm" fw={600}>
+                        Install Wizz
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                        {canInstall ? (
+                            "One-tap access from your home screen."
+                        ) : (
+                            <>
+                                Tap <Icon name="share" size={12} className="inline-icon" /> Share, then <b>Add to Home Screen</b>.
+                            </>
+                        )}
+                    </Text>
+                </div>
                 {canInstall ? (
-                    <span>Add Wizz to your home screen for one-tap access.</span>
-                ) : (
-                    <span>
-                        Tap <Icon name="share" size={14} className="inline-icon" /> Share, then <b>Add to Home Screen</b>.
-                    </span>
-                )}
-            </div>
-            <div className="toast__actions">
-                {canInstall ? (
-                    <Button unstyled
-                        type="button"
-                        className="btn btn--primary btn--sm"
+                    <Button
+                        size="xs"
                         onClick={async () => {
                             const outcome = await promptInstall();
                             if (outcome !== "accepted") dismiss();
@@ -51,11 +54,11 @@ const InstallPrompt = () => {
                         Install
                     </Button>
                 ) : null}
-                <ActionIcon unstyled type="button" className="icon-btn" onClick={dismiss} aria-label="Dismiss">
-                    <Icon name="close" size={18} />
+                <ActionIcon size="md" onClick={dismiss} aria-label="Dismiss">
+                    <Icon name="close" size={16} />
                 </ActionIcon>
-            </div>
-        </div>
+            </Group>
+        </Paper>
     );
 };
 

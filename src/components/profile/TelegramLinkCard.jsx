@@ -1,10 +1,13 @@
-import { Button, Paper } from "@mantine/core";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Alert, Anchor, Badge, Button, Code, CopyButton, Drawer, Group, Modal, Paper, Stack, Text, ThemeIcon } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
+import { useCallback, useEffect, useState } from "react";
 import Icon from "../Icon";
+import SettingsRow from "./SettingsRow";
 import { useAuth } from "../../context/AuthContext";
 import { createTelegramCode, unlinkTelegram } from "../../api/wizz.api";
 import { friendlyMessage } from "../../utils/errors";
-import { copyText, countdown } from "../../utils/format";
+import { countdown } from "../../utils/format";
 
 const POLL_MS = 5000;
 const BOT_RE = /^[A-Za-z0-9_]{3,64}$/;
@@ -15,34 +18,33 @@ const cleanBot = (value) => {
 };
 
 /**
- * Link / unlink Telegram. POST /wizz/me/telegram-code returns a single-use code the user sends
- * to the bot as "link <CODE>". While the code is valid we re-check /wizz/me to detect the link.
+ * Telegram settings row + sheet. POST /wizz/me/telegram-code returns a single-use code the user sends to
+ * the bot as "link <CODE>". While the code is valid we re-check /wizz/me to detect the link.
  */
 const TelegramLinkCard = () => {
     const { wizz, refreshWizz } = useAuth();
+    const desktop = useMediaQuery("(min-width: 768px)");
     const linked = Boolean(wizz?.member?.telegram?.linked);
     const username = wizz?.member?.telegram?.username;
 
+    const [open, setOpen] = useState(false);
     const [code, setCode] = useState(null); // { code, expiresAt, botUsername }
     const [now, setNow] = useState(Date.now());
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState("");
-    const [copied, setCopied] = useState(false);
-    const copiedTimer = useRef(null);
+    const [confirmUnlink, setConfirmUnlink] = useState(false);
 
     const expiresAt = code ? new Date(code.expiresAt).getTime() : 0;
     const msLeft = code ? expiresAt - now : 0;
     const expired = Boolean(code) && (!Number.isFinite(msLeft) || msLeft <= 0);
     const bot = cleanBot(code?.botUsername || wizz?.telegramBotUsername);
 
-    // Countdown tick.
     useEffect(() => {
         if (!code || expired) return undefined;
         const id = setInterval(() => setNow(Date.now()), 1000);
         return () => clearInterval(id);
     }, [code, expired]);
 
-    // Watch for the link to complete while a code is live.
     useEffect(() => {
         if (!code || expired || linked) return undefined;
         const id = setInterval(() => {
@@ -52,10 +54,11 @@ const TelegramLinkCard = () => {
     }, [code, expired, linked, refreshWizz]);
 
     useEffect(() => {
-        if (linked) setCode(null);
-    }, [linked]);
-
-    useEffect(() => () => clearTimeout(copiedTimer.current), []);
+        if (linked && code) {
+            setCode(null);
+            notifications.show({ message: "Telegram linked.", color: "teal", icon: <Icon name="check" size={16} /> });
+        }
+    }, [linked, code]);
 
     const requestCode = useCallback(async () => {
         setBusy(true);
@@ -72,26 +75,19 @@ const TelegramLinkCard = () => {
     }, []);
 
     const unlink = useCallback(async () => {
-        if (!window.confirm("Unlink Telegram? You won't be able to ask Wizz from Telegram until you link again.")) return;
         setBusy(true);
         setError("");
         try {
             await unlinkTelegram();
             await refreshWizz();
+            setConfirmUnlink(false);
+            notifications.show({ message: "Telegram unlinked.", color: "teal", icon: <Icon name="check" size={16} /> });
         } catch (err) {
             setError(friendlyMessage(err));
         } finally {
             setBusy(false);
         }
     }, [refreshWizz]);
-
-    const copy = async () => {
-        if (await copyText(`link ${code.code}`)) {
-            setCopied(true);
-            clearTimeout(copiedTimer.current);
-            copiedTimer.current = setTimeout(() => setCopied(false), 2000);
-        }
-    };
 
     const checkNow = async () => {
         setBusy(true);
@@ -106,77 +102,148 @@ const TelegramLinkCard = () => {
         }
     };
 
-    return (
-        <Paper component="section" className="card">
-            <h3 className="card__title">Telegram</h3>
+    const close = () => {
+        setOpen(false);
+        setConfirmUnlink(false);
+        setError("");
+    };
 
+    const content = (
+        <Stack gap="md">
             {linked ? (
                 <>
-                    <p className="telegram-status">
-                        <Icon name="check" size={18} className="text-success" />
-                        Linked{username ? ` as @${username}` : ""}. You can ask Wizz from Telegram.
-                    </p>
-                    <Button unstyled type="button" className="btn btn--ghost" onClick={unlink} disabled={busy}>
-                        Unlink Telegram
-                    </Button>
+                    <Group gap="sm" wrap="nowrap">
+                        <ThemeIcon size={40} radius="xl" variant="light" color="teal">
+                            <Icon name="check" size={20} />
+                        </ThemeIcon>
+                        <div>
+                            <Text fw={600} size="sm">
+                                Linked{username ? ` as @${username}` : ""}
+                            </Text>
+                            <Text size="xs" c="dimmed">
+                                You can ask Wizz and manage tasks from Telegram.
+                            </Text>
+                        </div>
+                    </Group>
+                    {confirmUnlink ? (
+                        <Alert color="red" icon={<Icon name="alert" size={16} />}>
+                            <Text size="sm">You won't be able to use Wizz from Telegram until you link again.</Text>
+                            <Group gap="xs" mt="sm">
+                                <Button size="xs" color="red" loading={busy} onClick={unlink}>
+                                    Unlink
+                                </Button>
+                                <Button size="xs" variant="subtle" color="gray" onClick={() => setConfirmUnlink(false)}>
+                                    Keep linked
+                                </Button>
+                            </Group>
+                        </Alert>
+                    ) : (
+                        <Button variant="light" color="red" onClick={() => setConfirmUnlink(true)} fullWidth>
+                            Unlink Telegram
+                        </Button>
+                    )}
                 </>
             ) : code && !expired ? (
-                <div className="telegram-code">
-                    <p>
+                <>
+                    <Text size="sm">
                         Open{" "}
                         {bot ? (
-                            <a href={`https://t.me/${bot}`} target="_blank" rel="noopener noreferrer">
+                            <Anchor href={`https://t.me/${bot}`} target="_blank" rel="noopener noreferrer" fw={600}>
                                 @{bot}
-                            </a>
+                            </Anchor>
                         ) : (
                             "the Wizz bot"
                         )}{" "}
-                        in Telegram and send:
-                    </p>
-                    <div className="telegram-code__box">
-                        <code>link {code.code}</code>
-                        <Button unstyled type="button" className="btn btn--secondary btn--sm" onClick={copy}>
-                            <Icon name={copied ? "check" : "copy"} size={16} /> {copied ? "Copied" : "Copy"}
-                        </Button>
-                    </div>
-                    <p className="muted small">
-                        Code expires in <strong>{countdown(msLeft)}</strong>. It works once.
-                    </p>
-                    <div className="row">
+                        in Telegram and send this message:
+                    </Text>
+                    <Paper withBorder p="sm" radius="md" bg="var(--brand-soft)">
+                        <Group justify="space-between" wrap="nowrap">
+                            <Code fz="lg" fw={700} bg="transparent">
+                                link {code.code}
+                            </Code>
+                            <CopyButton value={`link ${code.code}`} timeout={2000}>
+                                {({ copied, copy }) => (
+                                    <Button size="xs" variant={copied ? "light" : "filled"} color={copied ? "teal" : "gold"} onClick={copy} leftSection={<Icon name={copied ? "check" : "copy"} size={14} />}>
+                                        {copied ? "Copied" : "Copy"}
+                                    </Button>
+                                )}
+                            </CopyButton>
+                        </Group>
+                    </Paper>
+                    <Group gap={6}>
+                        <Icon name="clock" size={14} />
+                        <Text size="xs" c="dimmed">
+                            Expires in <b>{countdown(msLeft)}</b> · works once
+                        </Text>
+                    </Group>
+                    <Stack gap="xs">
                         {bot ? (
-                            <a
-                                className="btn btn--primary btn--sm"
-                                href={`https://t.me/${bot}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <Icon name="send" size={16} /> Open Telegram
-                            </a>
+                            <Button component="a" href={`https://t.me/${bot}`} target="_blank" rel="noopener noreferrer" leftSection={<Icon name="telegram" size={16} />} fullWidth>
+                                Open Telegram
+                            </Button>
                         ) : null}
-                        <Button unstyled type="button" className="btn btn--ghost btn--sm" onClick={checkNow} disabled={busy}>
+                        <Button variant="light" onClick={checkNow} loading={busy} fullWidth>
                             I've sent it
                         </Button>
-                    </div>
-                </div>
+                    </Stack>
+                </>
             ) : (
                 <>
-                    <p className="muted small">
+                    <Text size="sm" c="dimmed">
                         {expired
                             ? "That code has expired. Get a new one to link your Telegram account."
-                            : "Link your Telegram account to ask Wizz from Telegram as well."}
-                    </p>
-                    <Button unstyled type="button" className="btn btn--secondary" onClick={requestCode} disabled={busy}>
-                        <Icon name="send" size={18} /> {busy ? "Getting a code…" : expired ? "Get a new code" : "Link Telegram"}
+                            : "Link your Telegram account to ask Wizz and manage tasks from Telegram as well."}
+                    </Text>
+                    <Button onClick={requestCode} loading={busy} leftSection={<Icon name="telegram" size={16} />} fullWidth>
+                        {expired ? "Get a new code" : "Get a link code"}
                     </Button>
                 </>
             )}
-
             {error ? (
-                <div className="alert alert--danger small" role="alert">
+                <Alert color="red" icon={<Icon name="alert" size={16} />} role="alert" py="xs">
                     {error}
-                </div>
+                </Alert>
             ) : null}
-        </Paper>
+        </Stack>
+    );
+
+    const title = (
+        <Group gap="xs">
+            <Icon name="telegram" size={18} />
+            <Text fw={600}>Telegram</Text>
+        </Group>
+    );
+
+    return (
+        <>
+            <SettingsRow
+                icon="telegram"
+                iconColor="blue"
+                label="Telegram"
+                description={linked ? `Linked${username ? ` as @${username}` : ""}` : "Use Wizz from Telegram"}
+                right={
+                    <Group gap={4} wrap="nowrap">
+                        {linked ? (
+                            <Badge color="teal" variant="light">
+                                Linked
+                            </Badge>
+                        ) : null}
+                        <Icon name="chevron-right" size={16} className="settings-row__chevron" />
+                    </Group>
+                }
+                onClick={() => setOpen(true)}
+                aria-haspopup="dialog"
+            />
+            {desktop ? (
+                <Modal opened={open} onClose={close} title={title} size="sm">
+                    {content}
+                </Modal>
+            ) : (
+                <Drawer opened={open} onClose={close} title={title} position="bottom" size="auto" classNames={{ content: "sheet-content" }}>
+                    {content}
+                </Drawer>
+            )}
+        </>
     );
 };
 

@@ -1,7 +1,9 @@
+import { Skeleton, Stack } from "@mantine/core";
 import { Route, Routes } from "react-router-dom";
 import TopBar from "../../components/TopBar";
 import TaskListScreen from "./TaskListScreen";
 import TaskDetailScreen from "./TaskDetailScreen";
+import { TaskCardSkeleton } from "./TaskCard";
 import useTaskAccess from "./useTaskAccess";
 
 const BASE_PATH = "/tasks";
@@ -17,8 +19,16 @@ const TasksPage = () => {
         return (
             <div className="page">
                 <TopBar title="Tasks" />
-                <div className="page__body">
-                    <div className="spinner spinner--center" role="status" aria-label="Loading tasks" />
+                <div className="page__body" aria-busy="true">
+                    <Skeleton height={30} radius="xl" />
+                    <Stack gap="xs">
+                        <TaskCardSkeleton />
+                        <TaskCardSkeleton />
+                        <TaskCardSkeleton />
+                    </Stack>
+                    <span className="sr-only" role="status">
+                        Loading tasks
+                    </span>
                 </div>
             </div>
         );

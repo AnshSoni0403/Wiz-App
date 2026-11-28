@@ -1,6 +1,8 @@
-import { Button, PasswordInput, TextInput } from "@mantine/core";
+import { Alert, Button, Paper, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
+import { IconLock, IconMail } from "@tabler/icons-react";
 import { useState } from "react";
 import logoUrl from "../assets/images/marwiz-logo-gold.png";
+import Icon from "../components/Icon";
 import { useAuth } from "../context/AuthContext";
 import { friendlyMessage, toApiError } from "../utils/errors";
 import useOnlineStatus from "../hooks/useOnlineStatus";
@@ -40,47 +42,65 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="auth-page">
+        <div className="status-screen">
             <OfflineBanner />
-            <div className="auth-card">
-                <img src={logoUrl} alt="Marwiz Vision" className="auth-card__logo" />
-                <h1 className="auth-card__title">Wizz</h1>
-                <p className="auth-card__subtitle">Marwiz Vision's AI assistant. Sign in with your Marwiz Vision account.</p>
+            <div className="status-screen__center">
+                <Paper className="auth-panel" withBorder shadow="md" p="xl" radius="xl">
+                    <Stack gap={4} align="center" mb="lg">
+                        <img src={logoUrl} alt="Marwiz Vision" className="auth-panel__logo" />
+                        <Title order={1} size="h2" mt={8}>
+                            Sign in to Wizz
+                        </Title>
+                        <Text size="sm" c="dimmed" ta="center">
+                            Marwiz Vision's AI assistant
+                        </Text>
+                    </Stack>
 
-                <form className="form" onSubmit={onSubmit} noValidate>
-                    <TextInput
-                        label="Email"
-                        type="email"
-                        inputMode="email"
-                        autoComplete="username"
-                        autoCapitalize="none"
-                        spellCheck="false"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        disabled={busy}
-                        required
-                    />
-                    <PasswordInput
-                        label="Password"
-                        autoComplete="current-password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        disabled={busy}
-                        required
-                        visibilityToggleButtonProps={{ "aria-label": "Show or hide password" }}
-                    />
+                    <form onSubmit={onSubmit} noValidate>
+                        <Stack gap="sm">
+                            <TextInput
+                                label="Work email"
+                                placeholder="name@company.com"
+                                type="email"
+                                inputMode="email"
+                                autoComplete="username"
+                                autoCapitalize="none"
+                                spellCheck="false"
+                                leftSection={<IconMail size={16} stroke={1.75} />}
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                disabled={busy}
+                                required
+                                size="md"
+                            />
+                            <PasswordInput
+                                label="Password"
+                                placeholder="Your password"
+                                autoComplete="current-password"
+                                leftSection={<IconLock size={16} stroke={1.75} />}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                disabled={busy}
+                                required
+                                size="md"
+                                visibilityToggleButtonProps={{ "aria-label": "Show or hide password" }}
+                            />
 
-                    {error ? (
-                        <div className="alert alert--danger" role="alert">
-                            {error}
-                        </div>
-                    ) : null}
+                            {error ? (
+                                <Alert color="red" icon={<Icon name="alert" size={16} />} role="alert" py="xs">
+                                    {error}
+                                </Alert>
+                            ) : null}
 
-                    <Button unstyled type="submit" className="btn btn--primary btn--block" disabled={busy || !online}>
-                        {busy ? "Signing in…" : "Sign in"}
-                    </Button>
-                </form>
-                <p className="auth-card__hint">Forgot your password? Reset it from the Marwiz Vision Admin sign-in page.</p>
+                            <Button type="submit" size="md" fullWidth loading={busy} disabled={!online} mt={4}>
+                                Sign in
+                            </Button>
+                        </Stack>
+                    </form>
+                </Paper>
+                <Text size="xs" c="dimmed" ta="center" mt="md" maw={340}>
+                    Forgot your password? Reset it from the Marwiz Vision Admin sign-in page.
+                </Text>
             </div>
         </div>
     );

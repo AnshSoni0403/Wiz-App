@@ -1,19 +1,20 @@
-import { Paper } from "@mantine/core";
+import { Switch, Text } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { useEffect, useState } from "react";
 import Icon from "../Icon";
+import SettingsRow from "./SettingsRow";
 import { getPushConfig } from "../../api/notifications.api";
 import { currentSubscription, disablePush, enablePush, isPushSupported, pushPermission } from "../../pwa/push";
 import { friendlyMessage } from "../../utils/errors";
 
 /**
- * "Task notifications on this device": shown only when the server offers push and the browser
+ * "Notifications on this device" settings row: shown only when the server offers push and the browser
  * supports it. Turning it on asks for permission; turning it off removes this device.
  */
 const PushNotificationsCard = () => {
     const [config, setConfig] = useState(null);
     const [on, setOn] = useState(false);
     const [busy, setBusy] = useState(false);
-    const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -40,17 +41,16 @@ const PushNotificationsCard = () => {
     const toggle = async () => {
         setBusy(true);
         setError("");
-        setMessage("");
         try {
             if (on) {
                 await disablePush();
                 setOn(false);
-                setMessage("This device won't get task notifications any more.");
+                notifications.show({ message: "This device won't get task notifications any more.", color: "teal", icon: <Icon name="check" size={16} /> });
             } else {
                 const result = await enablePush(config.publicKey);
                 if (result === "enabled") {
                     setOn(true);
-                    setMessage("You'll be notified on this device.");
+                    notifications.show({ message: "You'll be notified on this device.", color: "teal", icon: <Icon name="check" size={16} /> });
                 } else if (result === "denied") {
                     setError("Notifications are blocked for this site. Allow them in your browser settings, then try again.");
                 } else {
@@ -65,40 +65,29 @@ const PushNotificationsCard = () => {
     };
 
     return (
-        <Paper component="section" className="card">
-            <h3 className="card__title">Task notifications</h3>
-            <div className="switch-row">
-                <span id="push-label">
-                    Get notified on this device
-                    <span className="muted small"> — new assignments, update requests and comments.</span>
-                </span>
-                <button
-                    type="button"
-                    role="switch"
-                    aria-checked={on}
-                    aria-labelledby="push-label"
-                    className={`switch ${on ? "is-on" : ""}`}
-                    onClick={toggle}
+        <SettingsRow
+            icon="bell"
+            label="Notifications on this device"
+            description={
+                <>
+                    {blocked && !on ? "Blocked in your browser settings." : "New assignments, update requests and comments."}
+                    {error ? (
+                        <Text size="xs" c="red.7" role="alert" mt={2}>
+                            {error}
+                        </Text>
+                    ) : null}
+                </>
+            }
+            right={
+                <Switch
+                    checked={on}
+                    onChange={toggle}
                     disabled={busy || (blocked && !on)}
-                >
-                    <span className="switch__knob" />
-                </button>
-            </div>
-            {blocked && !on ? <p className="muted small">Notifications are blocked for this site in your browser settings.</p> : null}
-            <div aria-live="polite">
-                {message ? (
-                    <p className="small text-success">
-                        <Icon name="check" size={14} className="inline-icon" /> {message}
-                    </p>
-                ) : null}
-                {error ? (
-                    <p className="small text-danger" role="alert">
-                        {error}
-                    </p>
-                ) : null}
-            </div>
-            <p className="muted small">Your task inbox in Wizz always works, with or without this.</p>
-        </Paper>
+                    aria-label="Get task notifications on this device"
+                    color="gold"
+                />
+            }
+        />
     );
 };
 

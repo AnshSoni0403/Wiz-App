@@ -72,18 +72,6 @@
     gap: 4px;
 }
 
-.topbar__leading:empty {
-    display: none;
-}
-
-.topbar__brand {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-    flex: 1;
-}
-
 .topbar__mark {
     width: 28px;
     height: 28px;
@@ -108,36 +96,6 @@
     font-size: 11px;
     line-height: 1.25;
     color: var(--text-muted);
-}
-
-/* ---------- Bottom navigation ---------- */
-.bottom-nav {
-    flex-shrink: 0;
-    display: flex;
-    justify-content: center;
-    gap: 4px;
-    height: calc(var(--nav-h) + var(--safe-bottom));
-    padding-bottom: var(--safe-bottom);
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-}
-
-.bottom-nav__item {
-    flex: 1;
-    max-width: 140px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    font-size: 11.5px;
-    font-weight: 500;
-    color: var(--text-muted);
-    text-decoration: none;
-}
-
-.bottom-nav__item.active {
-    color: var(--brand);
 }
 
 /* ---------- Buttons ---------- */
@@ -271,29 +229,6 @@
     box-shadow: 0 0 0 3px rgba(var(--brand-rgb), 0.15);
 }
 
-.input-group {
-    position: relative;
-    display: flex;
-}
-
-.input-group .input {
-    padding-right: 64px;
-}
-
-.input-group__btn {
-    position: absolute;
-    right: 4px;
-    top: 50%;
-    transform: translateY(-50%);
-    border: 0;
-    background: none;
-    padding: 8px 10px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--brand);
-    cursor: pointer;
-}
-
 /* ---------- Alerts & notices ---------- */
 .alert {
     padding: 10px 12px;
@@ -330,21 +265,22 @@
     color: #7a5b0b;
 }
 
+/* Slim offline strip (above the screen header; pads for the notch so the header below doesn't). */
 .offline-banner {
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: calc(6px + var(--safe-top)) 16px 6px;
+    gap: 6px;
+    padding: calc(4px + var(--safe-top)) 12px 4px;
     background: #3b3326;
     color: #fff;
-    font-size: 13px;
+    font-size: 12px;
+    font-weight: 500;
     text-align: center;
 }
 
-/* The banner already pads for the notch, so the top bar below it doesn't need to. */
-.app .offline-banner ~ .app-main .topbar {
+.offline-banner ~ .page .topbar {
     padding-top: 0;
     min-height: var(--topbar-h);
 }
@@ -375,11 +311,6 @@
     font-weight: 500;
 }
 
-.badge--soft {
-    background: var(--brand-soft);
-    color: var(--brand-hover);
-}
-
 .chip-row {
     display: flex;
     flex-wrap: wrap;
@@ -396,15 +327,6 @@
     color: var(--brand-hover);
     font-size: 13px;
     font-weight: 500;
-}
-
-.chip__note {
-    font-style: normal;
-    font-size: 11px;
-    padding: 0 6px;
-    border-radius: 999px;
-    background: var(--brand);
-    color: #fff;
 }
 
 /* ---------- Spinner / splash ---------- */
@@ -427,110 +349,7 @@
     }
 }
 
-.splash {
-    height: 100%;
-    height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-}
-
-/* ---------- Auth pages (login, no access, connection error) ---------- */
-.auth-page {
-    min-height: 100%;
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 24px 16px calc(24px + var(--safe-bottom));
-    background:
-        radial-gradient(circle at 20% 0%, rgba(var(--brand-rgb), 0.12), transparent 55%),
-        var(--canvas);
-}
-
-.auth-page .offline-banner {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-}
-
-.auth-card {
-    width: 100%;
-    max-width: 400px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow);
-    padding: 28px 22px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    text-align: center;
-}
-
-.auth-card .form {
-    text-align: left;
-    margin-top: 6px;
-}
-
-.auth-card__logo {
-    width: 120px;
-    margin: 0 auto;
-}
-
-.auth-card__mark {
-    margin: 0 auto;
-}
-
-.auth-card__icon {
-    color: var(--brand);
-}
-
-.auth-card__title {
-    margin: 0;
-    font-size: 24px;
-    font-weight: 600;
-}
-
-.auth-card__subtitle,
-.auth-card__message {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: 14px;
-}
-
-.auth-card__message {
-    color: var(--text);
-    font-size: 15px;
-    margin-bottom: 8px;
-}
-
-.auth-card__hint {
-    margin: 4px 0 0;
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
-/* ---------- Toasts (install / update) ---------- */
-.app-toasts {
-    /* Below the top bar so it never covers the chat composer. */
-    position: fixed;
-    left: 0;
-    right: 0;
-    top: calc(var(--topbar-h) + var(--safe-top) + 8px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 0 12px;
-    pointer-events: none;
-    z-index: 30;
-}
-
+/* ---------- Toasts (in-screen live toasts; the install/update stack is positioned in shell.css) ---------- */
 .toast {
     pointer-events: auto;
     width: 100%;
@@ -543,38 +362,6 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: var(--shadow-lg);
-}
-
-.toast__icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    background: var(--brand-soft);
-    color: var(--brand);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.toast__body {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    font-size: 13px;
-    color: var(--text-muted);
-}
-
-.toast__body strong {
-    color: var(--text);
-    font-size: 14px;
-}
-
-.toast__actions {
-    display: flex;
-    align-items: center;
-    gap: 4px;
 }
 
 /* ---------- Drawer ---------- */
@@ -638,73 +425,8 @@
     color: var(--danger);
 }
 
-/* ---------- Profile ---------- */
-.profile-card {
-    display: flex;
-    gap: 14px;
-    align-items: center;
-}
-
-.avatar {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: var(--brand);
-    color: #fff;
-    font-weight: 600;
-    font-size: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.profile-card__text {
-    min-width: 0;
-}
-
-.profile-card__name {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 600;
-}
-
-.profile-card__role {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 6px;
-}
-
-.telegram-status {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin: 0 0 12px;
-}
-
 .telegram-code p {
     margin: 0 0 10px;
-}
-
-.telegram-code__box {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 10px 12px;
-    margin-bottom: 10px;
-    border: 1px dashed var(--brand);
-    border-radius: var(--radius-sm);
-    background: var(--brand-soft);
-}
-
-.telegram-code__box code {
-    font-family: var(--font-mono);
-    font-size: 18px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    word-break: break-all;
 }
 
 /* ---------- Responsive workspace ---------- */
@@ -716,63 +438,19 @@
     flex-shrink: 0;
 }
 
-.topbar__leading:not(:empty) + .topbar__brand .topbar__mark,
-.nav-brand {
-    display: none;
-}
-
 .topbar .icon-btn {
     width: 40px;
     height: 40px;
-}
-
-.bottom-nav {
-    padding-inline: max(6px, env(safe-area-inset-left)) max(6px, env(safe-area-inset-right));
-}
-
-.bottom-nav__item {
-    min-width: 0;
-    font-size: 11px;
-    line-height: 1.2;
-}
-
-.bottom-nav__item > .icon,
-.bottom-nav__icon {
-    box-sizing: content-box;
-    padding: 4px 12px;
-    border-radius: 8px;
-    line-height: 0;
-}
-
-.bottom-nav__item.active {
-    color: var(--brand-hover);
-    font-weight: 600;
-}
-
-.bottom-nav__item.active > :first-child {
-    background: var(--brand-soft);
-}
-
-.bottom-nav__item:focus-visible {
-    outline-offset: -3px;
 }
 
 .wizz-drawer {
     border: 1px solid var(--border);
 }
 
-.wizz-drawer--bottom {
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-}
-
 .wizz-drawer__header {
     padding: calc(6px + var(--safe-top)) 12px 6px;
     min-height: 52px;
     border-bottom: 1px solid var(--border);
-}
-
-.wizz-drawer--bottom .wizz-drawer__header {
-    padding-top: 6px;
 }
 
 .wizz-drawer__header button {
@@ -788,66 +466,9 @@
     padding: 12px 14px calc(14px + var(--safe-bottom));
 }
 
-.profile-card__text {
-    overflow-wrap: anywhere;
-}
-
-.profile-settings {
-    width: 100%;
-    max-width: 680px;
-}
-
-.profile-settings > p:last-child {
-    margin: 2px 0;
-}
-
 @media (min-width: 768px) {
     .app {
         padding-left: var(--rail-width);
-    }
-
-    .bottom-nav {
-        position: fixed;
-        inset: 0 auto 0 0;
-        width: var(--rail-width);
-        height: auto;
-        flex-direction: column;
-        justify-content: flex-start;
-        border: 0;
-        border-right: 1px solid var(--border);
-        padding: 0 10px calc(12px + var(--safe-bottom));
-    }
-
-    .nav-brand {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: var(--safe-top) 8px 0;
-        min-height: calc(var(--topbar-h) + var(--safe-top));
-        font-size: 16px;
-        font-weight: 650;
-    }
-
-    .bottom-nav__item {
-        flex: none;
-        flex-direction: row;
-        justify-content: flex-start;
-        gap: 10px;
-        padding: 0 10px;
-        min-height: 42px;
-        max-width: none;
-        border-radius: var(--radius-sm);
-        font-size: 13px;
-    }
-
-    .bottom-nav__item > .icon,
-    .bottom-nav__icon {
-        padding: 0;
-    }
-
-    .bottom-nav__item:hover,
-    .bottom-nav__item.active {
-        background: var(--brand-soft);
     }
 
     .bottom-nav__profile {
@@ -865,4 +486,205 @@
     .app-toasts {
         left: var(--rail-width);
     }
+}
+
+/* ======================================================================
+   Account & system screens (redesign)
+   ====================================================================== */
+
+/* Full-screen states: login, no access, connection error, splash. */
+.status-screen {
+    min-height: 100%;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background:
+        radial-gradient(120% 60% at 50% -10%, rgba(var(--brand-rgb), 0.14), transparent 60%),
+        var(--canvas);
+}
+
+.status-screen__center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px calc(24px + var(--safe-bottom));
+}
+
+.auth-panel {
+    width: 100%;
+    max-width: 380px;
+    background: var(--surface);
+}
+
+.auth-panel__logo {
+    height: 44px;
+    width: auto;
+}
+
+.splash__mark {
+    animation: splash-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes splash-pulse {
+    50% {
+        transform: scale(0.94);
+        opacity: 0.8;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .splash__mark {
+        animation: none;
+    }
+}
+
+/* Install / update prompt cards (stacked by .app-toasts in shell.css). */
+.prompt-card {
+    background: var(--surface-2);
+}
+
+.prompt-card__text {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Settings list (Profile & settings). */
+.settings-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.settings-section__title {
+    padding: 0 4px;
+    letter-spacing: 0.04em;
+}
+
+.settings-section__list {
+    overflow: hidden;
+    background: var(--surface);
+}
+
+.settings-row {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    min-height: 56px;
+    text-align: left;
+}
+
+.settings-row + .settings-row {
+    border-top: 1px solid var(--border);
+}
+
+.settings-row__inner {
+    min-height: 36px;
+}
+
+.settings-row__text {
+    flex: 1;
+    min-width: 0;
+}
+
+.settings-row--pressable {
+    transition: background 0.15s ease;
+}
+
+.settings-row--pressable:hover,
+.settings-row--pressable:focus-visible {
+    background: var(--brand-soft);
+}
+
+.settings-row__chevron {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.profile-hero {
+    background:
+        linear-gradient(135deg, rgba(var(--brand-rgb), 0.1), transparent 60%),
+        var(--surface);
+}
+
+/* Bottom sheets on phones: rounded top, safe-area padding. */
+.sheet-content {
+    border-top-left-radius: var(--radius-lg) !important;
+    border-top-right-radius: var(--radius-lg) !important;
+    padding-bottom: var(--safe-bottom);
+}
+
+/* Notification inbox drawer. */
+.inbox__header {
+    border-bottom: 1px solid var(--border);
+    padding-top: calc(12px + var(--safe-top));
+}
+
+.inbox__body {
+    padding: 0;
+}
+
+.inbox__tools {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+}
+
+.inbox__list {
+    padding-bottom: calc(12px + var(--safe-bottom));
+}
+
+.inbox__items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.inbox-row {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s ease;
+}
+
+.inbox-row:hover,
+.inbox-row:focus-visible {
+    background: var(--brand-soft);
+}
+
+.inbox-row.is-unread {
+    background: rgba(var(--brand-rgb), 0.05);
+}
+
+.inbox-row__text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.inbox-row__num {
+    color: var(--brand);
+    font-weight: 700;
+}
+
+.inbox-row__meta {
+    margin-top: 2px;
+}
+
+.inbox-row__dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--brand);
+    margin-top: 6px;
+    flex-shrink: 0;
 }

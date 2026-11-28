@@ -1,16 +1,17 @@
-import { Button, Paper } from "@mantine/core";
+import { Alert, Avatar, Button, Card, Group, Progress, SimpleGrid, Skeleton, Stack, Text, ThemeIcon, UnstyledButton } from "@mantine/core";
 import { useEffect, useState } from "react";
 import Icon from "../../components/Icon";
 import { getWorkload } from "../../api/tasks.api";
 import { friendlyMessage, toApiError } from "../../utils/errors";
+import { initials } from "../../utils/format";
 
 const TILES = [
-    { key: "open", label: "Open", seg: "open" },
-    { key: "overdue", label: "Overdue", seg: "overdue", alert: true },
-    { key: "review", label: "Awaiting review", seg: "review" },
-    { key: "followUp", label: "Follow-ups", seg: "followUp" },
-    { key: "blocked", label: "Blocked", seg: "blocked", alert: true },
-    { key: "week", label: "Due this week", seg: "open" },
+    { key: "open", label: "Open", seg: "open", icon: "progress", color: "gold" },
+    { key: "overdue", label: "Overdue", seg: "overdue", icon: "alert", color: "red", alert: true },
+    { key: "week", label: "Due this week", seg: "open", icon: "due", color: "blue" },
+    { key: "review", label: "To review", seg: "review", icon: "done", color: "teal" },
+    { key: "followUp", label: "Follow-ups", seg: "followUp", icon: "flag", color: "orange" },
+    { key: "blocked", label: "Blocked", seg: "blocked", icon: "blocked", color: "red", alert: true },
 ];
 
 /** Managers' overview: counts that open the matching list, then each person's workload. */
@@ -39,67 +40,89 @@ const TeamOverview = ({ summary, teamId, reloadKey, onOpenList, onOpenPerson }) 
     const maxOpen = Math.max(1, ...people.map((p) => Number(p.open) || 0));
 
     return (
-        <div className="stack">
-            <div className="stat-grid">
+        <Stack gap="md">
+            <SimpleGrid cols={{ base: 3, sm: 6 }} spacing="xs">
                 {TILES.map((t) => {
                     const value = Number(summary?.[t.key]) || 0;
+                    const hot = t.alert && value > 0;
                     return (
-                        <button
-                            key={t.key}
-                            type="button"
-                            className={`stat-tile ${t.alert && value ? "stat-tile--alert" : ""}`}
-                            onClick={() => onOpenList(t.seg)}
-                        >
-                            <span className="stat-tile__value">{summary ? value : "–"}</span>
-                            <span className="stat-tile__label">{t.label}</span>
-                        </button>
+                        <UnstyledButton key={t.key} className={`tk-kpi ${hot ? "tk-kpi--alert" : ""}`} onClick={() => onOpenList(t.seg)} aria-label={`${t.label}: ${summary ? value : "loading"}`}>
+                            <ThemeIcon size={26} radius="md" variant="light" color={hot ? "red" : t.color}>
+                                <Icon name={t.icon} size={15} />
+                            </ThemeIcon>
+                            <span className="tk-kpi__value">{summary ? value : <Skeleton height={18} width={24} />}</span>
+                            <span className="tk-kpi__label">{t.label}</span>
+                        </UnstyledButton>
                     );
                 })}
-            </div>
+            </SimpleGrid>
 
-            <Paper component="section" className="card" aria-labelledby="workload-title" aria-busy={loading}>
-                <h3 className="card__title" id="workload-title">
-                    Workload
-                </h3>
+            <section aria-labelledby="workload-title" aria-busy={loading}>
+                <Group justify="space-between" mb={6}>
+                    <Text id="workload-title" size="xs" c="dimmed" fw={600} tt="uppercase">
+                        Workload
+                    </Text>
+                    {people.length ? (
+                        <Text size="xs" c="dimmed">
+                            {people.length} {people.length === 1 ? "person" : "people"}
+                        </Text>
+                    ) : null}
+                </Group>
                 {error ? (
-                    <div className="notice notice--danger" role="alert">
-                        <Icon name="alert" size={16} />
-                        <div>
-                            <p>{friendlyMessage(error)}</p>
-                            <Button unstyled type="button" className="btn btn--secondary btn--sm" onClick={() => setRetry((n) => n + 1)}>
-                                Retry
-                            </Button>
-                        </div>
-                    </div>
+                    <Alert color="red" icon={<Icon name="alert" size={16} />}>
+                        <Text size="sm">{friendlyMessage(error)}</Text>
+                        <Button size="xs" variant="light" color="red" mt={6} onClick={() => setRetry((n) => n + 1)}>
+                            Retry
+                        </Button>
+                    </Alert>
                 ) : null}
-                {loading ? <div className="spinner spinner--center" aria-label="Loading workload" /> : null}
-                {!loading && !error && !people.length ? <p className="muted small">No team members to show yet.</p> : null}
-                {!loading && people.length ? (
-                    <ul className="workload-list">
-                        {people.map((p) => (
-                            <li key={p._id}>
-                                <button type="button" className="workload-row" onClick={() => onOpenPerson(p._id)}>
-                                    <span className="workload-row__name">
-                                        {p.name}
-                                        {p.teams?.length ? <span className="muted small"> · {p.teams.join(", ")}</span> : null}
-                                    </span>
-                                    <span className="workload-bar" aria-hidden="true">
-                                        <span style={{ width: `${Math.round(((Number(p.open) || 0) / maxOpen) * 100)}%` }} />
-                                    </span>
-                                    <span className="workload-row__stats">
-                                        <span>{p.open || 0} open</span>
-                                        {p.overdue ? <span className="text-danger">{p.overdue} overdue</span> : null}
-                                        {p.blocked ? <span>{p.blocked} blocked</span> : null}
-                                        {p.awaitingReview ? <span>{p.awaitingReview} to review</span> : null}
-                                        {p.completedThisWeek ? <span className="text-success">{p.completedThisWeek} done this week</span> : null}
-                                    </span>
-                                </button>
-                            </li>
+                {loading ? (
+                    <Stack gap={6}>
+                        {[0, 1, 2].map((i) => (
+                            <Skeleton key={i} height={52} />
                         ))}
-                    </ul>
+                    </Stack>
                 ) : null}
-            </Paper>
-        </div>
+                {!loading && !error && !people.length ? (
+                    <Text size="sm" c="dimmed">
+                        No team members to show yet.
+                    </Text>
+                ) : null}
+                {!loading && people.length ? (
+                    <Card padding={0}>
+                        {people.map((p, i) => (
+                            <UnstyledButton key={p._id} className={`tk-person ${i ? "tk-person--divided" : ""}`} onClick={() => onOpenPerson(p._id)} aria-label={`Show ${p.name}'s open tasks`}>
+                                <Avatar size={32} radius="xl" color="gold" variant="light">
+                                    {initials(p.name)}
+                                </Avatar>
+                                <div className="tk-person__main">
+                                    <Group justify="space-between" wrap="nowrap" gap="xs">
+                                        <Text size="sm" fw={600} truncate>
+                                            {p.name}
+                                        </Text>
+                                        <Text size="xs" c="dimmed" style={{ flexShrink: 0 }}>
+                                            {p.open || 0} open
+                                        </Text>
+                                    </Group>
+                                    <Progress.Root size={5} mt={5} aria-hidden="true">
+                                        <Progress.Section value={((Number(p.overdue) || 0) / maxOpen) * 100} color="red" />
+                                        <Progress.Section value={(((Number(p.open) || 0) - (Number(p.overdue) || 0)) / maxOpen) * 100} color="gold" />
+                                    </Progress.Root>
+                                    <Group gap={8} mt={4} className="tk-meta">
+                                        {p.overdue ? <span className="tk-meta__item tk-meta__item--danger">{p.overdue} overdue</span> : null}
+                                        {p.blocked ? <span className="tk-meta__item">{p.blocked} blocked</span> : null}
+                                        {p.awaitingReview ? <span className="tk-meta__item">{p.awaitingReview} to review</span> : null}
+                                        {p.completedThisWeek ? <span className="tk-meta__item tk-meta__item--ok">{p.completedThisWeek} done this week</span> : null}
+                                        {p.teams?.length ? <span className="tk-meta__item">{p.teams.join(", ")}</span> : null}
+                                    </Group>
+                                </div>
+                                <Icon name="chevron-right" size={16} className="tk-person__chev" />
+                            </UnstyledButton>
+                        ))}
+                    </Card>
+                ) : null}
+            </section>
+        </Stack>
     );
 };
 

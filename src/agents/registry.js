@@ -16,8 +16,8 @@ import { canUseProposals, canUseTasks } from "./access";
 export const AGENTS = [
     {
         key: "knowledge",
-        label: "Knowledge",
-        icon: "book",
+        label: "Ask",
+        icon: "ask",
         path: "/knowledge",
         routePath: "knowledge/:conversationId?",
         enabled: true,

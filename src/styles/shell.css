@@ -1,0 +1,286 @@
+/*
+ * App shell (redesign): slim header, bottom tab bar on phones, left rail from 768px.
+ * Loaded after app.css — these rules own layout, header and navigation.
+ */
+:root {
+    --topbar-h: 52px;
+    --nav-h: 58px;
+    --rail-width: 76px;
+}
+
+html,
+body,
+#root {
+    height: 100%;
+    background: var(--canvas);
+}
+
+.app {
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.app-main {
+    order: 1;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* Every screen: header + scrolling body. */
+.page {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.page__body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 12px 14px calc(16px + var(--safe-bottom, 0px));
+    width: 100%;
+    max-width: var(--content-max);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ---------- header ---------- */
+.topbar {
+    flex-shrink: 0;
+    min-height: calc(var(--topbar-h) + var(--safe-top));
+    padding: var(--safe-top) 8px 0 12px;
+    background: rgba(255, 252, 250, 0.92);
+    backdrop-filter: saturate(160%) blur(10px);
+    -webkit-backdrop-filter: saturate(160%) blur(10px);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 5;
+}
+
+.topbar__mark {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+}
+
+.topbar__titles {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.15;
+}
+
+.topbar__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+}
+
+.topbar__subtitle {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    line-height: 1.2;
+}
+
+.topbar__trailing {
+    flex-shrink: 0;
+}
+
+.topbar__account {
+    display: inline-flex;
+    margin-left: 4px;
+}
+
+.user-menu__btn {
+    border-radius: 999px;
+    display: inline-flex;
+    padding: 2px;
+    transition: box-shadow 0.15s;
+}
+
+.user-menu__btn:focus-visible,
+.user-menu__btn:hover {
+    box-shadow: 0 0 0 2px var(--brand-soft);
+}
+
+.user-menu__who {
+    padding: 8px 12px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    max-width: 220px;
+}
+
+/* ---------- navigation: phones = bottom tab bar ---------- */
+.main-nav {
+    order: 2;
+    flex-shrink: 0;
+    display: flex;
+    align-items: stretch;
+    height: calc(var(--nav-h) + var(--safe-bottom));
+    padding: 0 6px var(--safe-bottom);
+    background: rgba(255, 252, 250, 0.96);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+    z-index: 6;
+}
+
+.main-nav__brand,
+.main-nav__account {
+    display: none;
+}
+
+.main-nav__items {
+    flex: 1;
+    display: flex;
+    justify-content: space-around;
+}
+
+.main-nav__item {
+    flex: 1;
+    max-width: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 500;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.main-nav__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 30px;
+    border-radius: 999px;
+    transition: background 0.18s ease, color 0.18s ease;
+}
+
+.main-nav__item.active {
+    color: var(--brand);
+    font-weight: 600;
+}
+
+.main-nav__item.active .main-nav__icon {
+    background: var(--brand-soft);
+}
+
+.main-nav__item:focus-visible .main-nav__icon {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+}
+
+/* ---------- tablet / desktop: left rail ---------- */
+@media (min-width: 768px) {
+    .app {
+        flex-direction: row;
+    }
+
+    .main-nav {
+        order: 0;
+        flex-direction: column;
+        align-items: center;
+        width: var(--rail-width);
+        height: 100%;
+        padding: calc(10px + var(--safe-top)) 0 14px;
+        border-top: 0;
+        border-right: 1px solid var(--border);
+        background: var(--surface);
+        gap: 10px;
+    }
+
+    .main-nav__brand {
+        display: flex;
+        padding: 4px 0 10px;
+    }
+
+    .main-nav__items {
+        flex: 1;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 6px;
+        width: 100%;
+    }
+
+    .main-nav__item {
+        flex: 0 0 auto;
+        max-width: none;
+        padding: 6px 0;
+    }
+
+    .main-nav__account {
+        display: flex;
+    }
+
+    /* The rail already has the account menu. */
+    .topbar__account {
+        display: none;
+    }
+
+    .topbar__mark {
+        display: none;
+    }
+
+    .topbar {
+        padding-left: 18px;
+    }
+
+    .page__body {
+        padding: 18px 24px 24px;
+    }
+}
+
+/* ---------- floating action button (screens place it inside .page) ---------- */
+.fab {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    z-index: 4;
+    box-shadow: 0 8px 20px rgba(var(--brand-rgb), 0.35);
+}
+
+/* Toast stack (update/install prompts) sits above the tab bar. */
+.app-toasts {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(var(--nav-h) + var(--safe-bottom) + 10px);
+    width: min(440px, calc(100vw - 24px));
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 30;
+    pointer-events: none;
+}
+
+.app-toasts > * {
+    pointer-events: auto;
+}
+
+@media (min-width: 768px) {
+    .app-toasts {
+        bottom: 20px;
+        left: calc(50% + var(--rail-width) / 2);
+    }
+}

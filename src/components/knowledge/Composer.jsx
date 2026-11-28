@@ -1,14 +1,13 @@
-import { ActionIcon } from "@mantine/core";
-import { forwardRef, useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
-import Icon from "../Icon";
+import { ActionIcon, Loader, Text, Textarea } from "@mantine/core";
+import { IconArrowUp } from "@tabler/icons-react";
+import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import config from "../../config";
 
-const MAX_HEIGHT_PX = 160;
-
 /**
- * Message composer: Enter sends, Shift+Enter adds a new line, max 4000 characters.
+ * Message composer: rounded input with a round send button. Enter sends, Shift+Enter adds a new line,
+ * max 4000 characters (the count only appears near the limit).
  */
-const Composer = forwardRef(({ onSend, disabled = false, busy = false, placeholder = "Ask Wizz…" }, ref) => {
+const Composer = forwardRef(({ onSend, disabled = false, busy = false, placeholder = "Ask Wizz anything…" }, ref) => {
     const [text, setText] = useState("");
     const areaRef = useRef(null);
     const max = config.maxMessageLength;
@@ -19,13 +18,6 @@ const Composer = forwardRef(({ onSend, disabled = false, busy = false, placehold
         focus: () => areaRef.current?.focus(),
         setText: (value) => setText(value),
     }));
-
-    useLayoutEffect(() => {
-        const el = areaRef.current;
-        if (!el) return;
-        el.style.height = "auto";
-        el.style.height = `${Math.min(el.scrollHeight, MAX_HEIGHT_PX)}px`;
-    }, [text]);
 
     const submit = () => {
         if (!canSend) return;
@@ -50,27 +42,41 @@ const Composer = forwardRef(({ onSend, disabled = false, busy = false, placehold
                 submit();
             }}
         >
-            <div className="composer__field">
-                <textarea
+            <div className="composer__box">
+                <Textarea
                     ref={areaRef}
                     className="composer__input"
-                    rows={1}
+                    variant="unstyled"
+                    autosize
+                    minRows={1}
+                    maxRows={6}
                     value={text}
                     maxLength={max}
                     placeholder={placeholder}
                     aria-label="Message"
                     enterKeyHint="send"
                     disabled={disabled}
-                    onChange={(e) => setText(e.target.value.slice(0, max))}
+                    onChange={(e) => setText(e.currentTarget.value.slice(0, max))}
                     onKeyDown={onKeyDown}
                 />
-                {remaining <= 500 ? (
-                    <span className={`composer__count ${remaining <= 0 ? "is-limit" : ""}`}>{remaining}</span>
-                ) : null}
+                <ActionIcon
+                    type="submit"
+                    variant="filled"
+                    color="gold"
+                    radius="xl"
+                    size={36}
+                    disabled={!canSend}
+                    aria-label={busy ? "Wizz is replying" : "Send"}
+                    className="composer__send"
+                >
+                    {busy ? <Loader size={16} color="white" /> : <IconArrowUp size={19} stroke={2.2} />}
+                </ActionIcon>
             </div>
-            <ActionIcon unstyled type="submit" className="composer__send" disabled={!canSend} aria-label="Send">
-                <Icon name="send" size={20} />
-            </ActionIcon>
+            {remaining <= 500 ? (
+                <Text size="xs" c={remaining <= 0 ? "red" : "dimmed"} ta="right" className="composer__count" aria-live="polite">
+                    {remaining} characters left
+                </Text>
+            ) : null}
         </form>
     );
 });

@@ -1,5 +1,6 @@
-import { Button } from "@mantine/core";
-import Sheet from "./Sheet";
+import { ActionIcon, Alert, Badge, Button, Drawer, Group, ScrollArea, SegmentedControl, Skeleton, Stack, Text, ThemeIcon, Tooltip, UnstyledButton } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
+import { IconChecks } from "@tabler/icons-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Icon from "./Icon";
@@ -10,30 +11,44 @@ import { relativeTime } from "../utils/format";
 
 const PER_PAGE = 20;
 
-const KIND_ICONS = {
-    assigned: "tasks",
-    reassigned: "users",
-    follow_up: "flag",
-    comment: "message",
-    due_changed: "clock",
-    reminder: "clock",
-    overdue: "alert",
-    escalation: "alert",
-    blocked: "alert",
-    review_needed: "check",
-    completed: "check",
-    verified: "check",
-    reopened: "refresh",
-    digest: "list",
+// Icon and soft colour per notification kind.
+const KINDS = {
+    assigned: ["tasks", "gold"],
+    reassigned: ["users", "blue"],
+    follow_up: ["flag", "orange"],
+    comment: ["message", "blue"],
+    due_changed: ["due", "gold"],
+    reminder: ["clock", "gold"],
+    overdue: ["alert", "red"],
+    escalation: ["alert", "red"],
+    blocked: ["blocked", "red"],
+    review_needed: ["done", "teal"],
+    completed: ["done", "teal"],
+    verified: ["done", "green"],
+    reopened: ["refresh", "orange"],
+    cancelled: ["close", "gray"],
+    status: ["progress", "gray"],
+    digest: ["list", "gray"],
 };
 
+const RowSkeleton = () => (
+    <Group gap="sm" wrap="nowrap" p="sm">
+        <Skeleton circle height={36} />
+        <Stack gap={6} style={{ flex: 1 }}>
+            <Skeleton height={10} width="80%" />
+            <Skeleton height={8} width="55%" />
+        </Stack>
+    </Group>
+);
+
 /**
- * Notification inbox (right-hand drawer): newest first, unread highlighted, "Mark all read", and
- * tapping an item marks it read and opens its task.
+ * Notification inbox: right-hand drawer (full screen on phones), newest first, unread highlighted,
+ * All / Unread, "Mark all read", and tapping an item marks it read and opens its task.
  */
 const NotificationsDrawer = ({ tasksPath = "/tasks" }) => {
     const notifications = useNotifications();
     const navigate = useNavigate();
+    const desktop = useMediaQuery("(min-width: 768px)");
     const open = Boolean(notifications?.inboxOpen);
     const close = notifications?.closeInbox;
     const [items, setItems] = useState([]);
@@ -101,81 +116,133 @@ const NotificationsDrawer = ({ tasksPath = "/tasks" }) => {
     };
 
     const unreadHere = items.some((n) => !n.readAt);
+    const firstLoad = loading && !items.length;
 
     return (
-        <Sheet open={open} onClose={close} title="Notifications" side="right">
-            <div className="inbox-tools">
-                <div className="segmented segmented--sm" role="group" aria-label="Show">
-                    <button type="button" aria-pressed={!onlyUnread} onClick={() => setOnlyUnread(false)}>
-                        All
-                    </button>
-                    <button type="button" aria-pressed={onlyUnread} onClick={() => setOnlyUnread(true)}>
-                        Unread{notifications.unread ? ` (${notifications.unread})` : ""}
-                    </button>
-                </div>
-                <Button unstyled
-                    type="button"
-                    className="btn btn--ghost btn--sm"
-                    onClick={readAll}
-                    disabled={busy || (!unreadHere && !notifications.unread)}
-                >
-                    Mark all read
-                </Button>
-            </div>
-            <div className="drawer__list">
+        <Drawer
+            opened={open}
+            onClose={close}
+            position="right"
+            size={desktop ? 420 : "100%"}
+            radius={desktop ? "lg" : 0}
+            padding={0}
+            scrollAreaComponent={ScrollArea.Autosize}
+            title={
+                <Group gap="xs">
+                    <Text fw={600} size="md">
+                        Notifications
+                    </Text>
+                    {notifications.unread ? (
+                        <Badge color="red" variant="filled" size="sm" circle={notifications.unread < 10}>
+                            {notifications.unread > 99 ? "99+" : notifications.unread}
+                        </Badge>
+                    ) : null}
+                </Group>
+            }
+            classNames={{ header: "inbox__header", body: "inbox__body" }}
+            styles={{ header: { padding: "calc(10px + var(--safe-top)) 12px 10px 16px" } }}
+            closeButtonProps={{ "aria-label": "Close notifications" }}
+        >
+            <Group gap="xs" wrap="nowrap" px="md" py="xs" className="inbox__tools">
+                <SegmentedControl
+                    value={onlyUnread ? "unread" : "all"}
+                    onChange={(v) => setOnlyUnread(v === "unread")}
+                    data={[
+                        { value: "all", label: "All" },
+                        { value: "unread", label: `Unread${notifications.unread ? ` (${notifications.unread})` : ""}` },
+                    ]}
+                    aria-label="Show"
+                    style={{ flex: 1 }}
+                />
+                <Tooltip label="Mark all read">
+                    <ActionIcon
+                        onClick={readAll}
+                        loading={busy}
+                        disabled={!unreadHere && !notifications.unread}
+                        aria-label="Mark all read"
+                        variant="light"
+                        color="gold"
+                    >
+                        <IconChecks size={18} stroke={1.75} />
+                    </ActionIcon>
+                </Tooltip>
+            </Group>
+
+            <div className="inbox__list">
                 {error ? (
-                    <div className="notice notice--danger" role="alert">
-                        <Icon name="alert" size={16} />
-                        <div>
-                            <p>{friendlyMessage(error)}</p>
-                            {isRetryable(error) || toApiError(error).kind === "http" ? (
-                                <Button unstyled type="button" className="btn btn--secondary btn--sm" onClick={() => load(1)}>
-                                    Retry
-                                </Button>
-                            ) : null}
-                        </div>
+                    <Alert color="red" m="md" icon={<Icon name="alert" size={16} />} role="alert">
+                        <Text size="sm">{friendlyMessage(error)}</Text>
+                        {isRetryable(error) || toApiError(error).kind === "http" ? (
+                            <Button size="xs" variant="light" color="red" mt="xs" onClick={() => load(1)}>
+                                Retry
+                            </Button>
+                        ) : null}
+                    </Alert>
+                ) : null}
+
+                {firstLoad ? (
+                    <div aria-label="Loading notifications">
+                        <RowSkeleton />
+                        <RowSkeleton />
+                        <RowSkeleton />
+                        <RowSkeleton />
                     </div>
                 ) : null}
+
                 {!loading && !error && !items.length ? (
-                    <div className="empty-state">
-                        <Icon name="bell" size={28} />
-                        <p>{onlyUnread ? "You're all caught up." : "No notifications yet."}</p>
-                        <p className="muted small">New assignments, update requests and comments on your tasks appear here.</p>
-                    </div>
+                    <Stack gap={6} align="center" ta="center" py={48} px="lg">
+                        <ThemeIcon size={52} radius="xl" variant="light" color="gold">
+                            <Icon name="bell" size={24} />
+                        </ThemeIcon>
+                        <Text fw={600} size="sm" mt={4}>
+                            {onlyUnread ? "You're all caught up" : "No notifications yet"}
+                        </Text>
+                        <Text size="xs" c="dimmed" maw={260}>
+                            New assignments, update requests and comments on your tasks appear here.
+                        </Text>
+                    </Stack>
                 ) : null}
-                <ul className="inbox-list">
-                    {items.map((n) => (
-                        <li key={n._id}>
-                            <button
-                                type="button"
-                                className={`inbox-item ${n.readAt ? "" : "is-unread"}`}
-                                onClick={() => openItem(n)}
-                            >
-                                <span className={`inbox-item__icon inbox-item__icon--${n.kind}`}>
-                                    <Icon name={KIND_ICONS[n.kind] || "bell"} size={18} />
-                                </span>
-                                <span className="inbox-item__text">
-                                    <span className="inbox-item__title">
-                                        {n.taskNumber ? <span className="task-num">#{n.taskNumber}</span> : null} {n.title}
+
+                <ul className="inbox__items">
+                    {items.map((n) => {
+                        const [icon, color] = KINDS[n.kind] || ["bell", "gray"];
+                        return (
+                            <li key={n._id}>
+                                <UnstyledButton className={`inbox-row ${n.readAt ? "" : "is-unread"}`} onClick={() => openItem(n)}>
+                                    <ThemeIcon size={36} radius="xl" variant="light" color={color}>
+                                        <Icon name={icon} size={17} />
+                                    </ThemeIcon>
+                                    <span className="inbox-row__text">
+                                        <Text size="sm" fw={n.readAt ? 500 : 600} lineClamp={1} component="span" className="inbox-row__title">
+                                            {n.taskNumber && !String(n.title || "").includes(`#${n.taskNumber}`) ? (
+                                                <span className="inbox-row__num">#{n.taskNumber} </span>
+                                            ) : null}
+                                            {n.title}
+                                        </Text>
+                                        {n.body ? (
+                                            <Text size="xs" c="dimmed" lineClamp={1} component="span">
+                                                {n.body}
+                                            </Text>
+                                        ) : null}
+                                        <Text size="xs" c="dimmed" component="span" className="inbox-row__meta">
+                                            {[n.actorName, relativeTime(n.createdAt)].filter(Boolean).join(" · ")}
+                                        </Text>
                                     </span>
-                                    {n.body ? <span className="inbox-item__body">{n.body}</span> : null}
-                                    <span className="inbox-item__meta">
-                                        {[n.actorName, relativeTime(n.createdAt)].filter(Boolean).join(" · ")}
-                                    </span>
-                                </span>
-                                {!n.readAt ? <span className="unread-dot" aria-label="Unread" /> : null}
-                            </button>
-                        </li>
-                    ))}
+                                    {!n.readAt ? <span className="inbox-row__dot" aria-label="Unread" /> : null}
+                                </UnstyledButton>
+                            </li>
+                        );
+                    })}
                 </ul>
-                {loading ? <div className="spinner spinner--center" aria-label="Loading notifications" /> : null}
+
+                {loading && items.length ? <RowSkeleton /> : null}
                 {!loading && items.length < total ? (
-                    <Button unstyled type="button" className="btn btn--ghost btn--block" onClick={() => load(page + 1)}>
+                    <Button variant="subtle" fullWidth my="sm" onClick={() => load(page + 1)}>
                         Load more
                     </Button>
                 ) : null}
             </div>
-        </Sheet>
+        </Drawer>
     );
 };
 

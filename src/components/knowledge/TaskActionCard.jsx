@@ -1,15 +1,31 @@
-import { Button } from "@mantine/core";
+import { Alert, Badge, Button, Card, Group, SegmentedControl, Text, ThemeIcon } from "@mantine/core";
+import { IconAlertTriangle, IconCheck, IconChecklist, IconChevronRight } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import Icon from "../Icon";
 import { cancelTaskAction, confirmTaskAction, switchTaskActionMode } from "../../api/tasks.api";
 import { useNotifications } from "../../context/NotificationsContext";
 import { friendlyMessage } from "../../utils/errors";
 import { PRIORITY_LABELS } from "../../utils/tasks";
+import { PRIORITY_COLORS, STATUS_COLORS } from "../../theme";
 
 const TASKS_PATH = "/tasks";
 
 const KIND_TITLES = { create: "New task", update: "Change task", status: "Status change" };
+const STATE = {
+    pending: { label: "Needs your OK", color: "orange" },
+    committed: { label: "Saved", color: "teal" },
+    cancelled: { label: "Cancelled", color: "gray" },
+    expired: { label: "Expired", color: "gray" },
+};
+
+const Row = ({ label, children }) => (
+    <div className="task-card__row">
+        <Text size="xs" c="dimmed" className="task-card__label">
+            {label}
+        </Text>
+        <div className="task-card__value">{children}</div>
+    </div>
+);
 
 /**
  * A task change Wizz prepared from the conversation, waiting for the member's confirmation:
@@ -29,6 +45,7 @@ const TaskActionCard = ({ action: initial }) => {
     const pending = action.status === "pending";
     const numbers = action.result?.numbers || [];
     const ids = action.result?.taskIds || [];
+    const state = STATE[action.status] || STATE.expired;
 
     const act = async (label, work) => {
         setBusy(label);
@@ -45,115 +62,115 @@ const TaskActionCard = ({ action: initial }) => {
     };
 
     const people = d.assignees?.length ? d.assignees.map((a) => a.name || a.employeeName).filter(Boolean) : [];
+    const title = KIND_TITLES[action.kind] || "Task change";
 
     return (
-        <div className={`task-action task-action--${action.status}`} role="group" aria-label={KIND_TITLES[action.kind] || "Task change"}>
-            <div className="task-action__head">
-                <Icon name="tasks" size={16} />
-                <span>{KIND_TITLES[action.kind] || "Task change"}</span>
-                <span className={`task-action__state task-action__state--${action.status}`}>
-                    {pending ? "Needs your OK" : action.status === "committed" ? "Saved" : action.status === "cancelled" ? "Cancelled" : "Expired"}
-                </span>
-            </div>
-            {action.summary ? <p className="task-action__summary">{action.summary}</p> : null}
-            <dl className="task-action__details">
-                {d.title ? (
-                    <div>
-                        <dt>Task</dt>
-                        <dd>{d.title}</dd>
-                    </div>
-                ) : null}
+        <Card className={`task-card task-card--${action.status}`} role="group" aria-label={title} padding="sm">
+            <Group gap="xs" wrap="nowrap" mb={6}>
+                <ThemeIcon variant="light" color="gold" radius="md" size={26}>
+                    <IconChecklist size={15} stroke={1.75} />
+                </ThemeIcon>
+                <Text fw={600} size="sm" style={{ flex: 1 }}>
+                    {title}
+                </Text>
+                <Badge color={state.color} variant="light">
+                    {state.label}
+                </Badge>
+            </Group>
+
+            {action.summary ? (
+                <Text size="sm" mb={8}>
+                    {action.summary}
+                </Text>
+            ) : null}
+
+            <div className="task-card__rows">
+                {d.title ? <Row label="Task">{d.title}</Row> : null}
                 {d.team?.name ? (
-                    <div>
-                        <dt>Team</dt>
-                        <dd>
-                            {d.team.name}
-                            {d.team.branch ? ` (${d.team.branch})` : ""}
-                            {d.team.memberCount ? ` · ${d.team.memberCount} member${d.team.memberCount === 1 ? "" : "s"}` : ""}
-                        </dd>
-                    </div>
+                    <Row label="Team">
+                        {d.team.name}
+                        {d.team.branch ? ` (${d.team.branch})` : ""}
+                        {d.team.memberCount ? ` · ${d.team.memberCount} member${d.team.memberCount === 1 ? "" : "s"}` : ""}
+                    </Row>
                 ) : null}
-                {people.length ? (
-                    <div>
-                        <dt>{people.length > 1 ? "People" : "Person"}</dt>
-                        <dd>{people.join(", ")}</dd>
-                    </div>
-                ) : null}
-                {d.dueLabel || d.due ? (
-                    <div>
-                        <dt>Due</dt>
-                        <dd>{d.dueLabel || d.due}</dd>
-                    </div>
-                ) : null}
+                {people.length ? <Row label={people.length > 1 ? "People" : "Person"}>{people.join(", ")}</Row> : null}
+                {d.dueLabel || d.due ? <Row label="Due">{d.dueLabel || d.due}</Row> : null}
                 {d.priority ? (
-                    <div>
-                        <dt>Priority</dt>
-                        <dd>{PRIORITY_LABELS[d.priority] || d.priority}</dd>
-                    </div>
+                    <Row label="Priority">
+                        <Badge color={PRIORITY_COLORS[d.priority] || "gray"} size="sm">
+                            {PRIORITY_LABELS[d.priority] || d.priority}
+                        </Badge>
+                    </Row>
                 ) : null}
                 {d.changes?.length ? (
-                    <div>
-                        <dt>Changes</dt>
-                        <dd>
-                            <ul className="task-action__changes">
-                                {d.changes.map((c) => (
-                                    <li key={c}>{c}</li>
-                                ))}
-                            </ul>
-                        </dd>
-                    </div>
+                    <Row label="Changes">
+                        <ul className="task-card__changes">
+                            {d.changes.map((c) => (
+                                <li key={c}>{c}</li>
+                            ))}
+                        </ul>
+                    </Row>
                 ) : null}
-            </dl>
+            </div>
 
             {pending && action.canSwitchTeamMode ? (
-                <div className="segmented segmented--sm" role="group" aria-label="How to assign the team">
-                    {[
-                        ["shared", "One shared task"],
-                        ["per_member", "One task per member"],
-                    ].map(([mode, label]) => (
-                        <button
-                            key={mode}
-                            type="button"
-                            aria-pressed={d.teamMode === mode}
-                            disabled={Boolean(busy)}
-                            onClick={() => d.teamMode !== mode && act("mode", () => switchTaskActionMode(action.id, mode))}
-                        >
-                            {label}
-                        </button>
-                    ))}
-                </div>
+                <SegmentedControl
+                    mt="xs"
+                    aria-label="How to assign the team"
+                    value={d.teamMode === "per_member" ? "per_member" : "shared"}
+                    disabled={Boolean(busy)}
+                    onChange={(mode) => d.teamMode !== mode && act("mode", () => switchTaskActionMode(action.id, mode))}
+                    data={[
+                        { value: "shared", label: "One shared task" },
+                        { value: "per_member", label: "One per member" },
+                    ]}
+                />
             ) : null}
 
             {error ? (
-                <p className="task-action__error" role="alert">
-                    <Icon name="alert" size={14} /> {friendlyMessage(error)}
-                </p>
+                <Alert color="red" mt="xs" p="xs" icon={<IconAlertTriangle size={16} />} role="alert">
+                    {friendlyMessage(error)}
+                </Alert>
             ) : null}
 
             {pending ? (
-                <div className="row">
-                    <Button unstyled type="button" className="btn btn--primary btn--sm" disabled={Boolean(busy)} onClick={() => act("confirm", () => confirmTaskAction(action.id))}>
-                        <Icon name="check" size={16} /> {busy === "confirm" ? "Saving…" : "Confirm"}
+                <Group gap="xs" mt="sm" grow>
+                    <Button
+                        leftSection={<IconCheck size={16} />}
+                        loading={busy === "confirm"}
+                        disabled={Boolean(busy) && busy !== "confirm"}
+                        onClick={() => act("confirm", () => confirmTaskAction(action.id))}
+                    >
+                        Confirm
                     </Button>
-                    <Button unstyled type="button" className="btn btn--ghost btn--sm" disabled={Boolean(busy)} onClick={() => act("cancel", () => cancelTaskAction(action.id))}>
+                    <Button variant="default" disabled={Boolean(busy)} loading={busy === "cancel"} onClick={() => act("cancel", () => cancelTaskAction(action.id))}>
                         Cancel
                     </Button>
-                </div>
+                </Group>
             ) : null}
 
             {action.status === "committed" && ids.length ? (
-                <div className="task-chips" aria-label="Saved tasks">
+                <Group gap={6} mt="xs" aria-label="Saved tasks">
                     {ids.map((id, i) => (
-                        <Link key={id} to={`${TASKS_PATH}/${encodeURIComponent(id)}`} className="task-chip">
-                            <Icon name="tasks" size={13} /> {numbers[i] ? `#${numbers[i]}` : "Open task"}
-                        </Link>
+                        <Badge
+                            key={id}
+                            component={Link}
+                            to={`${TASKS_PATH}/${encodeURIComponent(id)}`}
+                            variant="outline"
+                            color="gold"
+                            size="md"
+                            rightSection={<IconChevronRight size={12} />}
+                            className="task-ref"
+                        >
+                            {numbers[i] ? `Open #${numbers[i]}` : "Open task"}
+                        </Badge>
                     ))}
-                </div>
+                </Group>
             ) : null}
             <span className="sr-only" aria-live="polite">
                 {action.status === "committed" ? "Saved." : action.status === "cancelled" ? "Cancelled." : ""}
             </span>
-        </div>
+        </Card>
     );
 };
 
@@ -161,15 +178,24 @@ const TaskActionCard = ({ action: initial }) => {
 export const TaskRefs = ({ refs }) => {
     if (!refs?.length) return null;
     return (
-        <div className="task-chips" aria-label="Tasks mentioned">
+        <Group gap={6} className="task-refs" aria-label="Tasks mentioned">
             {refs.map((t) => (
-                <Link key={t._id} to={`${TASKS_PATH}/${encodeURIComponent(t._id)}`} className={`task-chip task-chip--${t.status || "open"}`}>
-                    {t.number ? <strong>#{t.number}</strong> : <Icon name="tasks" size={13} />}
-                    <span className="task-chip__title">{t.title}</span>
-                    {t.statusLabel ? <span className="task-chip__status">{t.statusLabel}</span> : null}
-                </Link>
+                <Badge
+                    key={t._id}
+                    component={Link}
+                    to={`${TASKS_PATH}/${encodeURIComponent(t._id)}`}
+                    variant="light"
+                    color={STATUS_COLORS[t.status] || "gray"}
+                    size="lg"
+                    radius="md"
+                    className="task-ref"
+                    leftSection={t.number ? <strong>#{t.number}</strong> : <IconChecklist size={13} />}
+                    title={t.statusLabel ? `${t.title} — ${t.statusLabel}` : t.title}
+                >
+                    <span className="task-ref__title">{t.title}</span>
+                </Badge>
             ))}
-        </div>
+        </Group>
     );
 };
 

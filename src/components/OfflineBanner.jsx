@@ -1,13 +1,14 @@
-import Icon from "./Icon";
+import { IconWifiOff } from "@tabler/icons-react";
 import useOnlineStatus from "../hooks/useOnlineStatus";
 
+/** Slim banner while offline (answers are never stored on the device). */
 const OfflineBanner = () => {
     const online = useOnlineStatus();
     if (online) return null;
     return (
         <div className="offline-banner" role="status" aria-live="polite">
-            <Icon name="wifiOff" size={16} />
-            <span>You're offline. Wizz needs a connection to answer - answers are never stored on this device.</span>
+            <IconWifiOff size={14} stroke={2} aria-hidden="true" />
+            <span>You're offline — Wizz needs a connection to answer.</span>
         </div>
     );
 };
